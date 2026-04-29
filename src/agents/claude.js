@@ -2,9 +2,22 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Agent } from './base.js';
 
 export class ClaudeAgent extends Agent {
-  constructor(apiKey) {
-    super('Claude', '🔵', 'claude-opus-4-5');
-    this.client = new Anthropic({ apiKey });
+  constructor(config) {
+    super('Claude', '🔵', 'claude-sonnet-4-5@20250929');
+
+    if (config.useVertex) {
+      // Vertex AI authentication
+      this.authType = 'vertex';
+      const baseURL = `https://${config.region}-aiplatform.googleapis.com/v1/projects/${config.projectId}/locations/${config.region}/publishers/anthropic/models`;
+      this.client = new Anthropic({
+        apiKey: config.apiKey,
+        baseURL
+      });
+    } else {
+      // API key authentication
+      this.authType = 'api-key';
+      this.client = new Anthropic({ apiKey: config.apiKey });
+    }
   }
 
   async propose(query) {
