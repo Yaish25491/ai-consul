@@ -53,4 +53,31 @@ describe('Renderer', () => {
     const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
     expect(output).toContain('Final consensus answer');
   });
+
+  test('should display auth type in banner when available (vertex)', () => {
+    const agents = [
+      { name: 'Claude', emoji: '🔵', model: 'claude-sonnet-4-5@20250929', authType: 'vertex' },
+      { name: 'Gemini', emoji: '🟢', model: 'gemini-2.0-flash' }
+    ];
+
+    Renderer.displayBanner(agents);
+
+    expect(consoleLogSpy).toHaveBeenCalled();
+    const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+    expect(output).toContain('[vertex]');
+    expect(output).not.toContain('[api-key]');
+  });
+
+  test('should display api-key auth type in banner', () => {
+    const agents = [
+      { name: 'Claude', emoji: '🔵', model: 'claude-opus-4-5', authType: 'api-key' },
+      { name: 'Gemini', emoji: '🟢', model: 'gemini-2.0-flash' }
+    ];
+
+    Renderer.displayBanner(agents);
+
+    expect(consoleLogSpy).toHaveBeenCalled();
+    const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+    expect(output).toContain('[api-key]');
+  });
 });

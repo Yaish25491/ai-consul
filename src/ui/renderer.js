@@ -14,7 +14,8 @@ export class Renderer {
     console.log('\n');
     console.log(chalk.bold('Council Members:'));
     agents.forEach(agent => {
-      console.log(`  ${agent.emoji} ${chalk.bold(agent.name)} (${agent.model})`);
+      const authInfo = agent.authType ? chalk.dim(` [${agent.authType}]`) : '';
+      console.log(`  ${agent.emoji} ${chalk.bold(agent.name)} (${agent.model})${authInfo}`);
     });
     console.log('\n');
     console.log(chalk.dim('Type /help for commands, /exit to quit\n'));
