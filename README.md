@@ -21,22 +21,31 @@ AI Consul replaces single-model AI responses with structured multi-agent deliber
 ## Quick Start
 
 ```bash
-# 1. Install dependencies
+# 1. Clone and install
+git clone git@github.com:Yaish25491/ai-consul.git
+cd ai-consul
 npm install
 
-# 2. Configure API keys (minimum 2 required)
-cp .env.example .env
+# 2. Install globally to use 'consul' command anywhere
+npm install -g .
 
-# Edit .env and add your keys:
+# 3. Configure API keys (minimum 2 required)
 export ANTHROPIC_API_KEY=sk-ant-...
 export GEMINI_API_KEY=AIza...
 
-# 3. Run
-npm start
-
-# Or install globally
-npm install -g .
+# 4. Run from anywhere
 consul
+```
+
+### Alternative: Run locally without global install
+
+```bash
+# Configure API keys
+cp .env.example .env
+# Edit .env with your keys
+
+# Run from project directory
+npm start
 ```
 
 ## Usage
