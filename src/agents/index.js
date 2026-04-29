@@ -9,9 +9,25 @@ import { GeminiAgent } from './gemini.js';
 export function loadAgents() {
   const agents = [];
 
-  // Load Claude if API key is present
-  if (process.env.ANTHROPIC_API_KEY) {
-    agents.push(new ClaudeAgent(process.env.ANTHROPIC_API_KEY));
+  // Load Claude with auto-detection of authentication method
+  // Priority: Vertex AI first, then API key
+  const hasVertexCreds = process.env.ANTHROPIC_VERTEX_PROJECT_ID && process.env.CLOUD_ML_REGION;
+  const hasApiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (hasVertexCreds) {
+    // Use Vertex AI authentication
+    agents.push(new ClaudeAgent({
+      useVertex: true,
+      projectId: process.env.ANTHROPIC_VERTEX_PROJECT_ID,
+      region: process.env.CLOUD_ML_REGION,
+      apiKey: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'GOOGLE_APPLICATION_CREDENTIALS'
+    }));
+  } else if (hasApiKey) {
+    // Use API key authentication
+    agents.push(new ClaudeAgent({
+      useVertex: false,
+      apiKey: process.env.ANTHROPIC_API_KEY
+    }));
   }
 
   // Load Gemini if API key is present
@@ -35,7 +51,7 @@ export function loadAgents() {
     throw new Error(
       `At least 2 API keys required for multi-agent deliberation.\n` +
       `Available agents: ${available}\n` +
-      `Configure at least 2 of: ANTHROPIC_API_KEY, GEMINI_API_KEY`
+      `Configure at least 2 of: ANTHROPIC_API_KEY or (ANTHROPIC_VERTEX_PROJECT_ID + CLOUD_ML_REGION), GEMINI_API_KEY`
     );
   }
 
