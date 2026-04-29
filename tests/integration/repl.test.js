@@ -30,7 +30,9 @@ describe('REPL Integration', () => {
       env: {
         ...process.env,
         ANTHROPIC_API_KEY: 'test-key',
-        GEMINI_API_KEY: 'test-key'
+        GEMINI_API_KEY: 'test-key',
+        ANTHROPIC_VERTEX_PROJECT_ID: '',
+        CLOUD_ML_REGION: ''
       }
     });
 
@@ -45,6 +47,59 @@ describe('REPL Integration', () => {
     proc.on('close', () => {
       expect(output).toContain('AI CONSUL');
       expect(output).toContain('Council Members');
+      expect(output).toContain('[api-key]');
+      done();
+    });
+  }, 10000);
+
+  test('should display banner with Vertex AI auth when vertex vars present', (done) => {
+    const proc = spawn('node', [binPath], {
+      env: {
+        ...process.env,
+        ANTHROPIC_VERTEX_PROJECT_ID: 'test-project',
+        CLOUD_ML_REGION: 'us-east5',
+        GEMINI_API_KEY: 'test-key',
+        ANTHROPIC_API_KEY: ''
+      }
+    });
+
+    let output = '';
+    proc.stdout.on('data', (data) => {
+      output += data.toString();
+      if (output.includes('AI CONSUL')) {
+        proc.kill();
+      }
+    });
+
+    proc.on('close', () => {
+      expect(output).toContain('AI CONSUL');
+      expect(output).toContain('[vertex]');
+      done();
+    });
+  }, 10000);
+
+  test('should prioritize Vertex AI when both auth methods available', (done) => {
+    const proc = spawn('node', [binPath], {
+      env: {
+        ...process.env,
+        ANTHROPIC_API_KEY: 'test-key',
+        ANTHROPIC_VERTEX_PROJECT_ID: 'test-project',
+        CLOUD_ML_REGION: 'us-east5',
+        GEMINI_API_KEY: 'test-key'
+      }
+    });
+
+    let output = '';
+    proc.stdout.on('data', (data) => {
+      output += data.toString();
+      if (output.includes('AI CONSUL')) {
+        proc.kill();
+      }
+    });
+
+    proc.on('close', () => {
+      expect(output).toContain('[vertex]');
+      expect(output).not.toContain('[api-key]');
       done();
     });
   }, 10000);
