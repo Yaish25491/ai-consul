@@ -30,8 +30,16 @@ npm install
 npm install -g .
 
 # 3. Configure API keys (minimum 2 required)
-export ANTHROPIC_API_KEY=sk-ant-...
-export GEMINI_API_KEY=AIza...
+
+# Claude Option A: Anthropic API
+export ANTHROPIC_API_KEY=sk-ant-api-xxxxx
+
+# Claude Option B: Google Cloud Vertex AI
+# export ANTHROPIC_VERTEX_PROJECT_ID=your-gcp-project-id
+# export CLOUD_ML_REGION=us-east5
+
+# Gemini (Required)
+export GEMINI_API_KEY=AIza-xxxxx
 
 # 4. Run from anywhere
 consul
@@ -64,10 +72,46 @@ npm start
 
 | Provider | Environment Variable | Model |
 |----------|---------------------|-------|
-| Claude | `ANTHROPIC_API_KEY` | claude-opus-4-5 |
+| Claude | `ANTHROPIC_API_KEY` or Vertex AI* | claude-sonnet-4-5@20250929 |
 | Gemini | `GEMINI_API_KEY` | gemini-2.0-flash |
 | OpenAI | `OPENAI_API_KEY` | (planned) |
 | Mistral | `MISTRAL_API_KEY` | (planned) |
+
+*See Authentication Methods below for Vertex AI setup
+
+## Authentication Methods
+
+### Claude Authentication
+
+AI Consul supports two authentication methods for Claude:
+
+**Option A: Anthropic API Key (Recommended for individual use)**
+```bash
+export ANTHROPIC_API_KEY=sk-ant-api-xxxxx
+```
+
+Get your key at: https://console.anthropic.com/
+
+**Option B: Google Cloud Vertex AI (For enterprise/GCP users)**
+```bash
+export ANTHROPIC_VERTEX_PROJECT_ID=your-gcp-project-id
+export CLOUD_ML_REGION=us-east5
+```
+
+Requirements:
+- GCP project with Vertex AI API enabled
+- Application Default Credentials configured (`gcloud auth application-default login`)
+
+The tool automatically detects which method to use based on environment variables. Vertex AI takes priority if both are configured.
+
+### Gemini Authentication
+
+Requires Google AI API key:
+```bash
+export GEMINI_API_KEY=AIza-xxxxx
+```
+
+Get your key at: https://aistudio.google.com/app/apikey
 
 ## Development
 
