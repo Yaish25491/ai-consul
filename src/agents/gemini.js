@@ -5,7 +5,7 @@ export class GeminiAgent extends Agent {
   constructor(apiKey) {
     super('Gemini', '🟢', 'gemini-2.0-flash');
     const genAI = new GoogleGenerativeAI(apiKey);
-    this.model = genAI.getGenerativeModel({ model: this.model });
+    this.client = genAI.getGenerativeModel({ model: this.model });
   }
 
   async propose(query) {
@@ -15,7 +15,7 @@ Query: ${query}
 
 Provide a complete, well-reasoned solution.`;
 
-    const result = await this.model.generateContent(prompt);
+    const result = await this.client.generateContent(prompt);
     return result.response.text();
   }
 
@@ -33,7 +33,7 @@ ${proposalText}
 
 Review all proposals. Identify strengths and weaknesses. State your refined position or explain why you hold firm. Be constructive and specific.`;
 
-    const result = await this.model.generateContent(prompt);
+    const result = await this.client.generateContent(prompt);
     return result.response.text();
   }
 
@@ -56,7 +56,7 @@ ${debateText}
 
 Produce a single, clean consensus answer that incorporates the best reasoning from all rounds. Write directly to the user with no meta-commentary about the debate process.`;
 
-    const result = await this.model.generateContent(prompt);
+    const result = await this.client.generateContent(prompt);
     return result.response.text();
   }
 }
