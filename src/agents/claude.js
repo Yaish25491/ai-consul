@@ -3,9 +3,16 @@ import { Agent } from './base.js';
 
 export class ClaudeAgent extends Agent {
   constructor(config) {
+    if (!config) {
+      throw new Error('ClaudeAgent requires a config object');
+    }
+
     super('Claude', '🔵', 'claude-sonnet-4-5@20250929');
 
     if (config.useVertex) {
+      if (!config.projectId || !config.region) {
+        throw new Error('Vertex AI authentication requires projectId and region');
+      }
       // Vertex AI authentication
       this.authType = 'vertex';
       const baseURL = `https://${config.region}-aiplatform.googleapis.com/v1/projects/${config.projectId}/locations/${config.region}/publishers/anthropic/models`;
@@ -14,6 +21,9 @@ export class ClaudeAgent extends Agent {
         baseURL
       });
     } else {
+      if (!config.apiKey) {
+        throw new Error('API key authentication requires apiKey');
+      }
       // API key authentication
       this.authType = 'api-key';
       this.client = new Anthropic({ apiKey: config.apiKey });
@@ -34,7 +44,7 @@ Provide a complete, well-reasoned solution.`
       }]
     });
 
-    return message.content[0].text;
+    return message.content?.[0]?.text || '';
   }
 
   async debate(query, proposals, round) {
@@ -58,7 +68,7 @@ Review all proposals. Identify strengths and weaknesses. State your refined posi
       }]
     });
 
-    return message.content[0].text;
+    return message.content?.[0]?.text || '';
   }
 
   async synthesize(query, history) {
@@ -87,6 +97,6 @@ Produce a single, clean consensus answer that incorporates the best reasoning fr
       }]
     });
 
-    return message.content[0].text;
+    return message.content?.[0]?.text || '';
   }
 }

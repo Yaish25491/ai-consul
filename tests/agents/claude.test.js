@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from '@jest/globals';
+import { describe, test, expect } from '@jest/globals';
 import { Agent } from '../../src/agents/base.js';
 
 // Test implementation for API key authentication
