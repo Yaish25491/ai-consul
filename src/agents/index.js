@@ -20,7 +20,7 @@ export function loadAgents() {
       useVertex: true,
       projectId: process.env.ANTHROPIC_VERTEX_PROJECT_ID,
       region: process.env.CLOUD_ML_REGION,
-      apiKey: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'GOOGLE_APPLICATION_CREDENTIALS'
+      apiKey: process.env.ANTHROPIC_API_KEY || 'vertex-placeholder'
     }));
   } else if (hasApiKey) {
     // Use API key authentication
