@@ -38,7 +38,7 @@ export ANTHROPIC_API_KEY=sk-ant-api-xxxxx
 # export ANTHROPIC_VERTEX_PROJECT_ID=your-gcp-project-id
 # export CLOUD_ML_REGION=us-east5
 
-# Gemini (Required)
+# Gemini (Required - minimum 2 providers needed for deliberation)
 export GEMINI_API_KEY=AIza-xxxxx
 
 # 4. Run from anywhere
@@ -77,7 +77,7 @@ npm start
 | OpenAI | `OPENAI_API_KEY` | (planned) |
 | Mistral | `MISTRAL_API_KEY` | (planned) |
 
-*See Authentication Methods below for Vertex AI setup
+*See [Authentication Methods](#authentication-methods) below for Vertex AI setup
 
 ## Authentication Methods
 
@@ -90,19 +90,19 @@ AI Consul supports two authentication methods for Claude:
 export ANTHROPIC_API_KEY=sk-ant-api-xxxxx
 ```
 
-Get your key at: https://console.anthropic.com/
+Get your key at: https://console.anthropic.com/account/keys
 
 **Option B: Google Cloud Vertex AI (For enterprise/GCP users)**
 ```bash
 export ANTHROPIC_VERTEX_PROJECT_ID=your-gcp-project-id
-export CLOUD_ML_REGION=us-east5
+export CLOUD_ML_REGION=us-east5  # Your GCP region (e.g., us-east5, us-central1, europe-west1)
 ```
 
 Requirements:
 - GCP project with Vertex AI API enabled
 - Application Default Credentials configured (`gcloud auth application-default login`)
 
-The tool automatically detects which method to use based on environment variables. Vertex AI takes priority if both are configured.
+The tool automatically detects which method to use based on environment variables. Vertex AI takes priority if both are configured (though only one is needed).
 
 ### Gemini Authentication
 
