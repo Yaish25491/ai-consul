@@ -4,7 +4,7 @@ import { Agent } from '../../src/agents/base.js';
 // Create a test implementation of GeminiAgent without requiring real SDK
 class TestGeminiAgent extends Agent {
   constructor(apiKey) {
-    super('Gemini', '🟢', 'gemini-2.0-flash');
+    super('Gemini', '🟢', 'gemini-3-flash-preview');
     this.apiKey = apiKey;
   }
 
@@ -27,7 +27,7 @@ describe('GeminiAgent', () => {
 
     expect(agent.name).toBe('Gemini');
     expect(agent.emoji).toBe('🟢');
-    expect(agent.model).toBe('gemini-2.0-flash');
+    expect(agent.model).toBe('gemini-3-flash-preview');
   });
 
   test('should propose a solution', async () => {

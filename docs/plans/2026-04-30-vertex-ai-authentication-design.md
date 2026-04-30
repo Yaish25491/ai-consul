@@ -141,7 +141,7 @@ agents.forEach(agent => {
 ```
 Council Members:
   🔵 Claude (claude-sonnet-4-5@20250929) [vertex]
-  🟢 Gemini (gemini-2.0-flash)
+  🟢 Gemini (gemini-3-flash-preview)
 ```
 
 ## Documentation Updates

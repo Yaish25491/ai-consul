@@ -6,14 +6,14 @@ import { selectModelTier } from '../utils/modelSelector.js';
 
 export class GeminiAgent extends Agent {
   constructor(apiKey) {
-    super('Gemini', '🟢', 'gemini-3-flash');
+    super('Gemini', '🟢', 'gemini-3-flash-preview');
 
     // Define model tiers
     this.models = {
-      fast: 'gemini-3-flash',           // Optimized for speed
+      fast: 'gemini-3-flash-preview',           // Optimized for speed
       balanced: 'gemini-2.5-flash',     // Chat, coding, files
-      best: 'gemini-3-pro',             // High-level reasoning
-      thinking: 'gemini-3.1-pro'        // Advanced testing, complex reasoning
+      best: 'gemini-3-pro-preview',             // High-level reasoning
+      thinking: 'gemini-3.1-pro-preview'        // Advanced testing, complex reasoning
     };
 
     this.defaultModel = this.models.balanced;

@@ -438,7 +438,7 @@ describe('GeminiAgent', () => {
     
     expect(agent.name).toBe('Gemini');
     expect(agent.emoji).toBe('🟢');
-    expect(agent.model).toBe('gemini-2.0-flash');
+    expect(agent.model).toBe('gemini-3-flash-preview');
   });
 
   test('should propose a solution', async () => {
@@ -485,7 +485,7 @@ import { Agent } from './base.js';
 
 export class GeminiAgent extends Agent {
   constructor(apiKey) {
-    super('Gemini', '🟢', 'gemini-2.0-flash');
+    super('Gemini', '🟢', 'gemini-3-flash-preview');
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({ model: this.model });
   }
@@ -896,7 +896,7 @@ describe('Renderer', () => {
   test('should display banner with agent list', () => {
     const agents = [
       { name: 'Claude', emoji: '🔵', model: 'claude-opus-4-5' },
-      { name: 'Gemini', emoji: '🟢', model: 'gemini-2.0-flash' }
+      { name: 'Gemini', emoji: '🟢', model: 'gemini-3-flash-preview' }
     ];
     
     Renderer.displayBanner(agents);
@@ -1406,7 +1406,7 @@ consul
 | Provider | Environment Variable | Model |
 |----------|---------------------|-------|
 | Claude | `ANTHROPIC_API_KEY` | claude-opus-4-5 |
-| Gemini | `GEMINI_API_KEY` | gemini-2.0-flash |
+| Gemini | `GEMINI_API_KEY` | gemini-3-flash-preview |
 | OpenAI | `OPENAI_API_KEY` | (planned) |
 | Mistral | `MISTRAL_API_KEY` | (planned) |
 

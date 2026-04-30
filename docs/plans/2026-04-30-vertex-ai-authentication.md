@@ -450,7 +450,7 @@ describe('Renderer', () => {
   test('should display banner with agent list', () => {
     const agents = [
       { name: 'Claude', emoji: '🔵', model: 'claude-opus-4-5' },
-      { name: 'Gemini', emoji: '🟢', model: 'gemini-2.0-flash' }
+      { name: 'Gemini', emoji: '🟢', model: 'gemini-3-flash-preview' }
     ];
 
     Renderer.displayBanner(agents);
@@ -465,7 +465,7 @@ describe('Renderer', () => {
   test('should display auth type in banner when available', () => {
     const agents = [
       { name: 'Claude', emoji: '🔵', model: 'claude-sonnet-4-5@20250929', authType: 'vertex' },
-      { name: 'Gemini', emoji: '🟢', model: 'gemini-2.0-flash' }
+      { name: 'Gemini', emoji: '🟢', model: 'gemini-3-flash-preview' }
     ];
 
     Renderer.displayBanner(agents);
@@ -478,7 +478,7 @@ describe('Renderer', () => {
   test('should display api-key auth type in banner', () => {
     const agents = [
       { name: 'Claude', emoji: '🔵', model: 'claude-sonnet-4-5@20250929', authType: 'api-key' },
-      { name: 'Gemini', emoji: '🟢', model: 'gemini-2.0-flash' }
+      { name: 'Gemini', emoji: '🟢', model: 'gemini-3-flash-preview' }
     ];
 
     Renderer.displayBanner(agents);
@@ -686,7 +686,7 @@ Find the "Supported Providers" section and update it:
 | Provider | Environment Variable | Model |
 |----------|---------------------|-------|
 | Claude | `ANTHROPIC_API_KEY` or Vertex AI* | claude-sonnet-4-5@20250929 |
-| Gemini | `GEMINI_API_KEY` | gemini-2.0-flash |
+| Gemini | `GEMINI_API_KEY` | gemini-3-flash-preview |
 | OpenAI | `OPENAI_API_KEY` | (planned) |
 | Mistral | `MISTRAL_API_KEY` | (planned) |
 
@@ -919,7 +919,7 @@ Expected output:
 
 Council Members:
   🔵 Claude (claude-sonnet-4-5@20250929) [api-key]
-  🟢 Gemini (gemini-2.0-flash)
+  🟢 Gemini (gemini-3-flash-preview)
 ```
 
 **Step 2: Test with Vertex AI authentication**
@@ -939,7 +939,7 @@ Expected output:
 
 Council Members:
   🔵 Claude (claude-sonnet-4-5@20250929) [vertex]
-  🟢 Gemini (gemini-2.0-flash)
+  🟢 Gemini (gemini-3-flash-preview)
 ```
 
 **Step 3: Test with both auth methods (should prioritize Vertex AI)**
@@ -959,7 +959,7 @@ Expected output:
 
 Council Members:
   🔵 Claude (claude-sonnet-4-5@20250929) [vertex]
-  🟢 Gemini (gemini-2.0-flash)
+  🟢 Gemini (gemini-3-flash-preview)
 ```
 
 **Step 4: Test error message with no Claude auth**

@@ -87,7 +87,7 @@ Renderer.displayVerdict(consensusAnswer)
 Agent availability determined by environment variables:
 
 - `ANTHROPIC_API_KEY` → Claude (claude-opus-4-5)
-- `GEMINI_API_KEY` → Gemini (gemini-2.0-flash)
+- `GEMINI_API_KEY` → Gemini (gemini-3-flash-preview)
 - `OPENAI_API_KEY` → GPT-4 (planned)
 - `MISTRAL_API_KEY` → Mistral Large (planned)
 

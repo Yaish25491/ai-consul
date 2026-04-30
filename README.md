@@ -73,7 +73,7 @@ npm start
 | Provider | Environment Variable | Model |
 |----------|---------------------|-------|
 | Claude | `ANTHROPIC_API_KEY` or Vertex AI* | claude-sonnet-4-5@20250929 |
-| Gemini | `GEMINI_API_KEY` | gemini-2.0-flash |
+| Gemini | `GEMINI_API_KEY` | gemini-3-flash-preview |
 | OpenAI | `OPENAI_API_KEY` | (planned) |
 | Mistral | `MISTRAL_API_KEY` | (planned) |
 

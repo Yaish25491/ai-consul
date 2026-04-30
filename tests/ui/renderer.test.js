@@ -15,7 +15,7 @@ describe('Renderer', () => {
   test('should display banner with agent list', () => {
     const agents = [
       { name: 'Claude', emoji: '🔵', model: 'claude-opus-4-5' },
-      { name: 'Gemini', emoji: '🟢', model: 'gemini-2.0-flash' }
+      { name: 'Gemini', emoji: '🟢', model: 'gemini-3-flash-preview' }
     ];
 
     Renderer.displayBanner(agents);
@@ -58,7 +58,7 @@ describe('Renderer', () => {
   test('should display auth type in banner when available (vertex)', () => {
     const agents = [
       { name: 'Claude', emoji: '🔵', model: 'claude-sonnet-4-5@20250929', authType: 'vertex' },
-      { name: 'Gemini', emoji: '🟢', model: 'gemini-2.0-flash' }
+      { name: 'Gemini', emoji: '🟢', model: 'gemini-3-flash-preview' }
     ];
 
     Renderer.displayBanner(agents);
@@ -72,7 +72,7 @@ describe('Renderer', () => {
   test('should display api-key auth type in banner', () => {
     const agents = [
       { name: 'Claude', emoji: '🔵', model: 'claude-opus-4-5', authType: 'api-key' },
-      { name: 'Gemini', emoji: '🟢', model: 'gemini-2.0-flash' }
+      { name: 'Gemini', emoji: '🟢', model: 'gemini-3-flash-preview' }
     ];
 
     Renderer.displayBanner(agents);
