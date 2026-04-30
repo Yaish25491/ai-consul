@@ -50,7 +50,7 @@ async function main() {
     }
 
     // Process query
-    await processQuery(trimmed, council, agents);
+    await processQuery(trimmed, council, agents, rl);
     rl.prompt();
   });
 
@@ -106,15 +106,15 @@ function handleCommand(command, agents, rl) {
 /**
  * Process user query through deliberation
  */
-async function processQuery(query, council, agents) {
+async function processQuery(query, council, agents, rl) {
   const abortController = new AbortController();
   let isProcessing = true;
   let currentSpinner = null;
 
   // Enable raw mode to capture ESC key
+  // Note: Don't call resume() - readline already has stdin active
   try {
     process.stdin.setRawMode(true);
-    process.stdin.resume();
   } catch (error) {
     console.warn(chalk.yellow('⚠️  ESC cancellation unavailable (raw mode not supported)'));
   }
@@ -136,13 +136,13 @@ async function processQuery(query, council, agents) {
   const cleanup = () => {
     if (isProcessing) {
       isProcessing = false;
+      process.stdin.removeListener('data', escHandler);
+
       try {
         process.stdin.setRawMode(false);
-        // Don't pause stdin - readline needs it to continue working
       } catch (error) {
         // Ignore cleanup errors
       }
-      process.stdin.removeListener('data', escHandler);
     }
   };
 
