@@ -8,12 +8,121 @@ import { Council } from '../src/core/council.js';
 import { Renderer } from '../src/ui/renderer.js';
 
 /**
+ * Process request in developer mode (iterative code development)
+ */
+async function processDeveloperMode(task, agents, rl, lastResponses) {
+  // Clear previous responses
+  Object.keys(lastResponses).forEach(key => delete lastResponses[key]);
+
+  // Assign roles
+  const developer = agents.find(a => a.name === 'Gemini') || agents[0];
+  const reviewer = agents.find(a => a.name === 'Claude') || agents[1];
+
+  console.log(chalk.bold.cyan('\n▸ DEVELOPER MODE'));
+  console.log(chalk.dim(`Developer: ${developer.emoji} ${developer.name}`));
+  console.log(chalk.dim(`Reviewer: ${reviewer.emoji} ${reviewer.name}`));
+  console.log(chalk.dim('─'.repeat(50)));
+  console.log('');
+
+  const MAX_ITERATIONS = 5;
+  let currentCode = null;
+  let iteration = 1;
+
+  for (iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
+    console.log(chalk.bold.yellow(`\n▸ Iteration ${iteration}/${MAX_ITERATIONS}\n`));
+
+    // Developer writes/updates code
+    const devSpinner = ora(`${developer.name} ${currentCode ? 'updating' : 'writing'} code...`).start();
+
+    let devPrompt;
+    if (!currentCode) {
+      devPrompt = `You are a software developer. Write code for the following task:
+
+${task}
+
+Provide clean, working code with brief comments. Include the full implementation.`;
+    } else {
+      devPrompt = `You previously wrote this code:
+
+\`\`\`
+${currentCode}
+\`\`\`
+
+The code reviewer provided this feedback:
+
+${lastResponses[reviewer.name]}
+
+Update the code to address all the feedback. Provide the complete updated code.`;
+    }
+
+    try {
+      currentCode = await developer.propose(devPrompt);
+      devSpinner.stop();
+
+      lastResponses[developer.name] = currentCode;
+      Renderer.displayAgentResponse(developer, currentCode, developer.currentModel);
+    } catch (error) {
+      devSpinner.stop();
+      Renderer.displayError(`${developer.name} error: ${error.message}`);
+      return;
+    }
+
+    // Reviewer checks code
+    const reviewSpinner = ora(`${reviewer.name} reviewing code...`).start();
+
+    const reviewPrompt = `You are a code reviewer. Review the following code:
+
+\`\`\`
+${currentCode}
+\`\`\`
+
+Original task:
+${task}
+
+Provide feedback on:
+1. Correctness and completeness
+2. Code quality and best practices
+3. Potential bugs or issues
+
+If there are NO MAJOR ISSUES, start your response with "APPROVED:" and explain why.
+If there ARE issues, start with "ISSUES FOUND:" and list them clearly.`;
+
+    let review;
+    try {
+      review = await reviewer.propose(reviewPrompt);
+      reviewSpinner.stop();
+
+      lastResponses[reviewer.name] = review;
+      Renderer.displayAgentResponse(reviewer, review, reviewer.currentModel);
+    } catch (error) {
+      reviewSpinner.stop();
+      Renderer.displayError(`${reviewer.name} error: ${error.message}`);
+      return;
+    }
+
+    // Check if approved
+    if (review.toUpperCase().includes('APPROVED:')) {
+      console.log(chalk.green.bold('\n✓ Code approved by reviewer!\n'));
+      break;
+    }
+
+    if (iteration === MAX_ITERATIONS) {
+      console.log(chalk.yellow(`\n⚠️  Reached maximum iterations (${MAX_ITERATIONS}). Presenting current version.\n`));
+    }
+  }
+
+  // Display final code
+  Renderer.displayFinalCode(currentCode, iteration <= MAX_ITERATIONS ? 'Approved' : 'Max iterations reached');
+}
+
+/**
  * Main REPL loop
  */
 async function main() {
   let agents;
   let council;
   let lastResponses = {}; // Store full responses for /view command
+  let currentMode = 'consulting'; // Default mode
 
   // Load agents and validate
   try {
@@ -26,6 +135,8 @@ async function main() {
 
   // Display banner
   Renderer.displayBanner(agents);
+  console.log(chalk.bold.cyan(`Mode: ${currentMode}`));
+  console.log(chalk.dim('Switch modes with /consulting or /developer\n'));
 
   // Create readline interface
   const rl = readline.createInterface({
@@ -46,13 +157,20 @@ async function main() {
 
     // Handle commands
     if (trimmed.startsWith('/')) {
-      handleCommand(trimmed, agents, rl, lastResponses);
+      const modeChanged = handleCommand(trimmed, agents, rl, lastResponses, currentMode);
+      if (modeChanged) {
+        currentMode = modeChanged;
+      }
       return;
     }
 
-    // Process query
+    // Process query based on current mode
     try {
-      await processQuery(trimmed, council, agents, rl, lastResponses);
+      if (currentMode === 'consulting') {
+        await processQuery(trimmed, council, agents, rl, lastResponses);
+      } else if (currentMode === 'developer') {
+        await processDeveloperMode(trimmed, agents, rl, lastResponses);
+      }
     } catch (error) {
       console.error(chalk.red('\nUnexpected error during query:'), error.message);
     }
@@ -80,8 +198,9 @@ async function main() {
 
 /**
  * Handle special commands
+ * Returns new mode if mode changed, otherwise undefined
  */
-function handleCommand(command, agents, rl, lastResponses) {
+function handleCommand(command, agents, rl, lastResponses, currentMode) {
   const parts = command.split(' ');
   const cmd = parts[0].toLowerCase();
   const arg = parts[1];
@@ -98,6 +217,18 @@ function handleCommand(command, agents, rl, lastResponses) {
       });
       console.log('\n');
       break;
+
+    case '/consulting':
+      console.log(chalk.green('\n✓ Switched to CONSULTING mode'));
+      console.log(chalk.dim('Agents deliberate to find the best answer\n'));
+      rl.prompt();
+      return 'consulting';
+
+    case '/developer':
+      console.log(chalk.green('\n✓ Switched to DEVELOPER mode'));
+      console.log(chalk.dim('Iterative code development with review cycles\n'));
+      rl.prompt();
+      return 'developer';
 
     case '/view':
       if (!arg) {

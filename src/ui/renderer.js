@@ -7,18 +7,18 @@ export class Renderer {
    */
   static displayBanner(agents) {
     console.log('\n');
-console.log(chalk.bold.cyan('   ╔════════════════════════════════════════════════════════╗'));
-console.log(chalk.bold.cyan('   ║                                                        ║'));
-console.log(chalk.bold.cyan('   ║    ██████╗  ██████╗ ███╗   ██╗███████╗██╗   ██╗██╗     ║'));
-console.log(chalk.bold.cyan('   ║   ██╔════╝ ██╔═══██╗████╗  ██║██╔════╝██║   ██║██║     ║'));
-console.log(chalk.bold.cyan('   ║   ██║      ██║   ██║██╔██╗ ██║███████╗██║   ██║██║     ║'));
-console.log(chalk.bold.cyan('   ║   ██║      ██║   ██║██║╚██╗██║╚════██║██║   ██║██║     ║'));
-console.log(chalk.bold.cyan('   ║   ╚██████╗ ╚██████╔╝██║ ╚████║███████║╚██████╔╝███████╗║'));
-console.log(chalk.bold.cyan('   ║    ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚══════╝║'));
-console.log(chalk.bold.cyan('   ║                                                        ║'));
-console.log(chalk.bold.cyan('   ║             AI Multi-Agent Deliberation v1.1           ║'));
-console.log(chalk.bold.cyan('   ║                                                        ║'));
-console.log(chalk.bold.cyan('   ╚════════════════════════════════════════════════════════╝'));
+console.log(chalk.bold.cyan('   ╔═══════════════════════════════════════════════════════════╗'));
+console.log(chalk.bold.cyan('   ║                                                           ║'));
+console.log(chalk.bold.cyan('   ║    ██████╗  ██████╗ ███╗   ██╗███████╗██╗   ██╗██╗        ║'));
+console.log(chalk.bold.cyan('   ║   ██╔════╝ ██╔═══██╗████╗  ██║██╔════╝██║   ██║██║        ║'));
+console.log(chalk.bold.cyan('   ║   ██║      ██║   ██║██╔██╗ ██║███████╗██║   ██║██║        ║'));
+console.log(chalk.bold.cyan('   ║   ██║      ██║   ██║██║╚██╗██║╚════██║██║   ██║██║        ║'));
+console.log(chalk.bold.cyan('   ║   ╚██████╗ ╚██████╔╝██║ ╚████║███████║╚██████╔╝███████╗   ║'));
+console.log(chalk.bold.cyan('   ║    ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚══════╝   ║'));
+console.log(chalk.bold.cyan('   ║                                                           ║'));
+console.log(chalk.bold.cyan('   ║             AI Multi-Agent Deliberation v1.1              ║'));
+console.log(chalk.bold.cyan('   ║                                                           ║'));
+console.log(chalk.bold.cyan('   ╚═══════════════════════════════════════════════════════════╝'));
 console.log('');
     console.log(chalk.bold('Council Members:'));
     agents.forEach(agent => {
@@ -120,6 +120,10 @@ console.log('');
   static displayHelp() {
     console.log('\n');
     console.log(chalk.bold('Available Commands:'));
+    console.log('\n' + chalk.bold.cyan('Modes:'));
+    console.log('  /consulting     - Multi-agent deliberation mode (default)');
+    console.log('  /developer      - Iterative code development mode');
+    console.log('\n' + chalk.bold.cyan('General:'));
     console.log('  /help           - Display this help message');
     console.log('  /agents         - List active council members');
     console.log('  /view <agent>   - View full response from an agent');
@@ -128,6 +132,23 @@ console.log('');
     console.log('  ESC             - Abort current request');
     console.log('  Ctrl+C x2       - Exit the session');
     console.log('\n');
+  }
+
+  /**
+   * Display final code (for developer mode)
+   */
+  static displayFinalCode(code, status) {
+    const boxContent = boxen(code, {
+      padding: { top: 0, bottom: 0, left: 1, right: 1 },
+      margin: { top: 1, bottom: 0, left: 0, right: 0 },
+      borderStyle: 'double',
+      borderColor: 'cyan',
+      title: `💻 FINAL CODE - ${status}`,
+      titleAlignment: 'center'
+    });
+
+    console.log(boxContent);
+    console.log('');
   }
 
   /**
