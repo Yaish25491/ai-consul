@@ -163,7 +163,7 @@ async function processQuery(query, council, agents) {
 
     completedProposals.forEach(({ agent, proposal }) => {
       const agentObj = agents.find(a => a.name === agent);
-      Renderer.displayAgentResponse(agentObj, proposal);
+      Renderer.displayAgentResponse(agentObj, proposal, agentObj.currentModel);
     });
 
     // Check if aborted before continuing
@@ -209,7 +209,7 @@ async function processQuery(query, council, agents) {
 
       completedResponses.forEach(({ agent, response }) => {
         const agentObj = agents.find(a => a.name === agent);
-        Renderer.displayAgentResponse(agentObj, response);
+        Renderer.displayAgentResponse(agentObj, response, agentObj.currentModel);
       });
 
       debates.push({ round, responses: completedResponses });

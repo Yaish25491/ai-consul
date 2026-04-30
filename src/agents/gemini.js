@@ -2,18 +2,51 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import chalk from 'chalk';
 import { Agent } from './base.js';
 import { withRetry } from '../utils/retry.js';
+import { selectModelTier } from '../utils/modelSelector.js';
 
 export class GeminiAgent extends Agent {
   constructor(apiKey) {
-    super('Gemini', '🟢', 'gemini-2.0-flash');
+    super('Gemini', '🟢', 'gemini-3-flash');
+
+    // Define model tiers
+    this.models = {
+      fast: 'gemini-3-flash',           // Optimized for speed
+      balanced: 'gemini-2.5-flash',     // Chat, coding, files
+      best: 'gemini-3-pro',             // High-level reasoning
+      thinking: 'gemini-3.1-pro'        // Advanced testing, complex reasoning
+    };
+
+    this.defaultModel = this.models.balanced;
+    this.currentModel = this.defaultModel;
+
     const genAI = new GoogleGenerativeAI(apiKey);
-    this.client = genAI.getGenerativeModel({ model: this.model });
+    this.genAI = genAI; // Store reference to create models dynamically
+    this.client = genAI.getGenerativeModel({ model: this.currentModel });
+  }
+
+  /**
+   * Select optimal model for current request
+   */
+  selectModel(query, phase, context = '') {
+    const tier = selectModelTier(query, phase, context);
+    const targetModel = this.models[tier] || this.defaultModel;
+
+    // Gemini requires new client instance for different model
+    if (targetModel !== this.currentModel) {
+      this.currentModel = targetModel;
+      this.client = this.genAI.getGenerativeModel({ model: this.currentModel });
+    }
+
+    return this.currentModel;
   }
 
   async propose(query, signal = null) {
+    // Select model for this phase
+    const model = this.selectModel(query, 'proposal');
+
     const retryCallback = (attempt, error, delayMs) => {
       console.log(chalk.yellow(
-        `\n⚠️  ${this.name} rate limited (attempt ${attempt}). ` +
+        `\n⚠️  ${this.name} (${model}) rate limited (attempt ${attempt}). ` +
         `Retrying in ${Math.round(delayMs / 1000)}s...\n`
       ));
     };
@@ -51,9 +84,13 @@ Provide a complete, well-reasoned solution.`;
   }
 
   async debate(query, proposals, round, signal = null) {
+    // Context includes all proposals
+    const context = proposals.map(p => p.proposal).join('\n');
+    const model = this.selectModel(query, 'debate', context);
+
     const retryCallback = (attempt, error, delayMs) => {
       console.log(chalk.yellow(
-        `\n⚠️  ${this.name} rate limited (attempt ${attempt}). ` +
+        `\n⚠️  ${this.name} (${model}) rate limited (attempt ${attempt}). ` +
         `Retrying in ${Math.round(delayMs / 1000)}s...\n`
       ));
     };
@@ -96,9 +133,16 @@ Review all proposals. Identify strengths and weaknesses. State your refined posi
   }
 
   async synthesize(query, history, signal = null) {
+    // Context includes all debates
+    const context = history.map(h =>
+      h.responses.map(r => r.response).join('\n')
+    ).join('\n');
+
+    const model = this.selectModel(query, 'synthesis', context);
+
     const retryCallback = (attempt, error, delayMs) => {
       console.log(chalk.yellow(
-        `\n⚠️  ${this.name} rate limited (attempt ${attempt}). ` +
+        `\n⚠️  ${this.name} (${model}) rate limited (attempt ${attempt}). ` +
         `Retrying in ${Math.round(delayMs / 1000)}s...\n`
       ));
     };

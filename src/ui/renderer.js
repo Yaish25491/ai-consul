@@ -8,17 +8,19 @@ export class Renderer {
   static displayBanner(agents) {
     console.log('\n');
     console.log(chalk.bold.cyan('╔══════════════════════════════════════════╗'));
-    console.log(chalk.bold.cyan('║            AI CONSUL v1.0                ║'));
+    console.log(chalk.bold.cyan('║            AI CONSUL v1.1                ║'));
     console.log(chalk.bold.cyan('║   Multi-Agent Deliberation Council       ║'));
     console.log(chalk.bold.cyan('╚══════════════════════════════════════════╝'));
     console.log('\n');
     console.log(chalk.bold('Council Members:'));
     agents.forEach(agent => {
       const authInfo = agent.authType ? chalk.dim(` [${agent.authType}]`) : '';
-      console.log(`  ${agent.emoji} ${chalk.bold(agent.name)} (${agent.model})${authInfo}`);
+      const modelInfo = agent.currentModel ? chalk.dim(` - ${agent.currentModel}`) : '';
+      console.log(`  ${agent.emoji} ${chalk.bold(agent.name)}${authInfo}${modelInfo}`);
     });
     console.log('\n');
-    console.log(chalk.dim('Type /help for commands, /exit to quit\n'));
+    console.log(chalk.dim('Type /help for commands, /exit to quit'));
+    console.log(chalk.dim('Press ESC during deliberation to cancel\n'));
   }
 
   /**
@@ -38,9 +40,10 @@ export class Renderer {
   /**
    * Display agent's response with color coding
    */
-  static displayAgentResponse(agent, response) {
+  static displayAgentResponse(agent, response, modelUsed = null) {
     const color = this._getAgentColor(agent.name);
-    const header = `${agent.emoji} ${chalk.bold[color](agent.name)}`;
+    const modelInfo = modelUsed ? chalk.dim(` [${modelUsed}]`) : '';
+    const header = `${agent.emoji} ${chalk.bold[color](agent.name)}${modelInfo}`;
 
     console.log(header);
     console.log(chalk[color](response));

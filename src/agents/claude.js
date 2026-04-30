@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import chalk from 'chalk';
 import { Agent } from './base.js';
 import { withRetry } from '../utils/retry.js';
+import { selectModelTier } from '../utils/modelSelector.js';
 
 export class ClaudeAgent extends Agent {
   constructor(config) {
@@ -9,7 +10,17 @@ export class ClaudeAgent extends Agent {
       throw new Error('ClaudeAgent requires a config object');
     }
 
-    super('Claude', '🔵', 'claude-sonnet-4-5@20250929');
+    super('Claude', '🔵', 'claude-sonnet-4-6@20250929');
+
+    // Define model tiers
+    this.models = {
+      fast: 'claude-haiku-4-5@20250929',      // Proposals, simple queries
+      balanced: 'claude-sonnet-4-6@20250929',  // Debate, medium queries
+      best: 'claude-opus-4-7@20250929'         // Synthesis, complex queries
+    };
+
+    this.defaultModel = this.models.balanced;
+    this.currentModel = this.defaultModel;
 
     if (config.useVertex) {
       if (!config.projectId || !config.region) {
@@ -32,10 +43,22 @@ export class ClaudeAgent extends Agent {
     }
   }
 
+  /**
+   * Select optimal model for current request
+   */
+  selectModel(query, phase, context = '') {
+    const tier = selectModelTier(query, phase, context);
+    this.currentModel = this.models[tier] || this.defaultModel;
+    return this.currentModel;
+  }
+
   async propose(query, signal = null) {
+    // Select model for this phase
+    const model = this.selectModel(query, 'proposal');
+
     const retryCallback = (attempt, error, delayMs) => {
       console.log(chalk.yellow(
-        `\n⚠️  ${this.name} rate limited (attempt ${attempt}). ` +
+        `\n⚠️  ${this.name} (${model}) rate limited (attempt ${attempt}). ` +
         `Retrying in ${Math.round(delayMs / 1000)}s...\n`
       ));
     };
@@ -43,7 +66,7 @@ export class ClaudeAgent extends Agent {
     return await withRetry(
       async (abortSignal) => {
         const requestOptions = {
-          model: this.model,
+          model: model, // Use selected model
           max_tokens: 4096,
           messages: [{
             role: 'user',
@@ -70,9 +93,13 @@ Provide a complete, well-reasoned solution.`
   }
 
   async debate(query, proposals, round, signal = null) {
+    // Context includes all proposals
+    const context = proposals.map(p => p.proposal).join('\n');
+    const model = this.selectModel(query, 'debate', context);
+
     const retryCallback = (attempt, error, delayMs) => {
       console.log(chalk.yellow(
-        `\n⚠️  ${this.name} rate limited (attempt ${attempt}). ` +
+        `\n⚠️  ${this.name} (${model}) rate limited (attempt ${attempt}). ` +
         `Retrying in ${Math.round(delayMs / 1000)}s...\n`
       ));
     };
@@ -84,7 +111,7 @@ Provide a complete, well-reasoned solution.`
           .join('\n\n');
 
         const requestOptions = {
-          model: this.model,
+          model: model, // Use selected model
           max_tokens: 4096,
           messages: [{
             role: 'user',
@@ -113,9 +140,16 @@ Review all proposals. Identify strengths and weaknesses. State your refined posi
   }
 
   async synthesize(query, history, signal = null) {
+    // Context includes all debates
+    const context = history.map(h =>
+      h.responses.map(r => r.response).join('\n')
+    ).join('\n');
+
+    const model = this.selectModel(query, 'synthesis', context);
+
     const retryCallback = (attempt, error, delayMs) => {
       console.log(chalk.yellow(
-        `\n⚠️  ${this.name} rate limited (attempt ${attempt}). ` +
+        `\n⚠️  ${this.name} (${model}) rate limited (attempt ${attempt}). ` +
         `Retrying in ${Math.round(delayMs / 1000)}s...\n`
       ));
     };
@@ -132,7 +166,7 @@ Review all proposals. Identify strengths and weaknesses. State your refined posi
           .join('\n\n');
 
         const requestOptions = {
-          model: this.model,
+          model: model, // Use selected model
           max_tokens: 4096,
           messages: [{
             role: 'user',
