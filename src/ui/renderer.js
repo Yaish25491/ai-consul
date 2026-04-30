@@ -49,8 +49,9 @@ console.log('');
     const modelInfo = modelUsed ? chalk.dim(` ${modelUsed}`) : '';
 
     // Truncate response if too long (keep first 500 chars)
-    const truncated = response.length > 500
-      ? response.substring(0, 500) + chalk.dim('...\n[Response truncated for display]')
+    const isTruncated = response.length > 500;
+    const truncated = isTruncated
+      ? response.substring(0, 500) + chalk.dim(`...\n[Truncated - use /view ${agent.name.toLowerCase()} for full response]`)
       : response;
 
     const boxContent = boxen(truncated, {
@@ -59,6 +60,24 @@ console.log('');
       borderStyle: 'round',
       borderColor: color,
       title: `${agent.emoji} ${agent.name}${modelInfo}`,
+      titleAlignment: 'left'
+    });
+
+    console.log(boxContent);
+  }
+
+  /**
+   * Display full agent response (for /view command)
+   */
+  static displayFullResponse(agent, response) {
+    const color = this._getAgentColor(agent.name);
+
+    const boxContent = boxen(response, {
+      padding: { top: 0, bottom: 0, left: 1, right: 1 },
+      margin: { top: 1, bottom: 1, left: 0, right: 0 },
+      borderStyle: 'double',
+      borderColor: color,
+      title: `${agent.emoji} ${agent.name} - Full Response`,
       titleAlignment: 'left'
     });
 
@@ -101,12 +120,13 @@ console.log('');
   static displayHelp() {
     console.log('\n');
     console.log(chalk.bold('Available Commands:'));
-    console.log('  /help      - Display this help message');
-    console.log('  /agents    - List active council members');
-    console.log('  /exit      - Exit the session');
-    console.log('  /quit      - Exit the session');
-    console.log('  ESC        - Abort current request');
-    console.log('  Ctrl+C x2  - Exit the session');
+    console.log('  /help           - Display this help message');
+    console.log('  /agents         - List active council members');
+    console.log('  /view <agent>   - View full response from an agent');
+    console.log('  /exit           - Exit the session');
+    console.log('  /quit           - Exit the session');
+    console.log('  ESC             - Abort current request');
+    console.log('  Ctrl+C x2       - Exit the session');
     console.log('\n');
   }
 

@@ -13,6 +13,7 @@ import { Renderer } from '../src/ui/renderer.js';
 async function main() {
   let agents;
   let council;
+  let lastResponses = {}; // Store full responses for /view command
 
   // Load agents and validate
   try {
@@ -45,12 +46,12 @@ async function main() {
 
     // Handle commands
     if (trimmed.startsWith('/')) {
-      handleCommand(trimmed, agents, rl);
+      handleCommand(trimmed, agents, rl, lastResponses);
       return;
     }
 
     // Process query
-    await processQuery(trimmed, council, agents, rl);
+    await processQuery(trimmed, council, agents, rl, lastResponses);
     rl.prompt();
   });
 
@@ -75,8 +76,12 @@ async function main() {
 /**
  * Handle special commands
  */
-function handleCommand(command, agents, rl) {
-  switch (command.toLowerCase()) {
+function handleCommand(command, agents, rl, lastResponses) {
+  const parts = command.split(' ');
+  const cmd = parts[0].toLowerCase();
+  const arg = parts[1];
+
+  switch (cmd) {
     case '/help':
       Renderer.displayHelp();
       break;
@@ -87,6 +92,27 @@ function handleCommand(command, agents, rl) {
         console.log(`  ${agent.emoji} ${agent.name} (${agent.model})`);
       });
       console.log('\n');
+      break;
+
+    case '/view':
+      if (!arg) {
+        console.log('\n' + chalk.yellow('Usage: /view <agent-name>'));
+        console.log('Available agents:');
+        Object.keys(lastResponses).forEach(name => {
+          console.log(`  - ${name}`);
+        });
+        console.log('');
+      } else {
+        const agentName = arg.charAt(0).toUpperCase() + arg.slice(1).toLowerCase();
+        const fullResponse = lastResponses[agentName];
+
+        if (fullResponse) {
+          const agent = agents.find(a => a.name === agentName);
+          Renderer.displayFullResponse(agent, fullResponse);
+        } else {
+          console.log(chalk.red(`\n✗ No response found for agent: ${agentName}\n`));
+        }
+      }
       break;
 
     case '/exit':
@@ -106,7 +132,9 @@ function handleCommand(command, agents, rl) {
 /**
  * Process user query through deliberation
  */
-async function processQuery(query, council, agents, rl) {
+async function processQuery(query, council, agents, rl, lastResponses) {
+  // Clear previous responses
+  Object.keys(lastResponses).forEach(key => delete lastResponses[key]);
   const abortController = new AbortController();
   let isProcessing = true;
   let currentSpinner = null;
@@ -171,6 +199,7 @@ async function processQuery(query, council, agents, rl) {
 
     completedProposals.forEach(({ agent, proposal }) => {
       const agentObj = agents.find(a => a.name === agent);
+      lastResponses[agent] = proposal; // Store full response
       Renderer.displayAgentResponse(agentObj, proposal, agentObj.currentModel);
     });
 
@@ -217,6 +246,7 @@ async function processQuery(query, council, agents, rl) {
 
       completedResponses.forEach(({ agent, response }) => {
         const agentObj = agents.find(a => a.name === agent);
+        lastResponses[agent] = response; // Store full response (overwrite with latest)
         Renderer.displayAgentResponse(agentObj, response, agentObj.currentModel);
       });
 
