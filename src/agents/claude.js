@@ -78,10 +78,6 @@ export class ClaudeAgent extends Agent {
         const requestOptions = {
           model: model, // Use selected model
           max_tokens: 8000,
-          thinking: {
-            type: 'enabled',
-            budget_tokens: 4000
-          },
           messages: [{
             role: 'user',
             content: `You are participating in a multi-agent deliberation council. Propose your independent solution to this query without knowing what other agents will suggest.
@@ -91,6 +87,14 @@ Query: ${query}
 Provide a complete, well-reasoned solution. Use your full reasoning capabilities.`
           }]
         };
+
+        // Only enable thinking for Sonnet/Opus models (Haiku doesn't support it)
+        if (model.includes('sonnet') || model.includes('opus')) {
+          requestOptions.thinking = {
+            type: 'enabled',
+            budget_tokens: 4000
+          };
+        }
 
         // Add signal if provided (only standard Anthropic SDK supports AbortSignal, not Vertex)
         if (abortSignal && this.authType !== 'vertex') {
@@ -134,10 +138,6 @@ Provide a complete, well-reasoned solution. Use your full reasoning capabilities
         const requestOptions = {
           model: model, // Use selected model
           max_tokens: 8000,
-          thinking: {
-            type: 'enabled',
-            budget_tokens: 4000
-          },
           messages: [{
             role: 'user',
             content: `You are in debate round ${round} of a multi-agent deliberation council.
@@ -150,6 +150,14 @@ ${proposalText}
 Review all proposals. Identify strengths and weaknesses. State your refined position or explain why you hold firm. Be constructive and specific. Use your full reasoning capabilities.`
           }]
         };
+
+        // Only enable thinking for Sonnet/Opus models (Haiku doesn't support it)
+        if (model.includes('sonnet') || model.includes('opus')) {
+          requestOptions.thinking = {
+            type: 'enabled',
+            budget_tokens: 4000
+          };
+        }
 
         // Add signal if provided (only standard Anthropic SDK supports AbortSignal, not Vertex)
         if (abortSignal && this.authType !== 'vertex') {
@@ -201,10 +209,6 @@ Review all proposals. Identify strengths and weaknesses. State your refined posi
         const requestOptions = {
           model: model, // Use selected model
           max_tokens: 8000,
-          thinking: {
-            type: 'enabled',
-            budget_tokens: 5000
-          },
           messages: [{
             role: 'user',
             content: `You are synthesizing the final consensus from a multi-agent deliberation.
@@ -217,6 +221,14 @@ ${debateText}
 Produce a single, clean consensus answer that incorporates the best reasoning from all rounds. Write directly to the user with no meta-commentary about the debate process. Use your full reasoning capabilities to synthesize the best answer.`
           }]
         };
+
+        // Only enable thinking for Sonnet/Opus models (Haiku doesn't support it)
+        if (model.includes('sonnet') || model.includes('opus')) {
+          requestOptions.thinking = {
+            type: 'enabled',
+            budget_tokens: 5000
+          };
+        }
 
         // Add signal if provided (only standard Anthropic SDK supports AbortSignal, not Vertex)
         if (abortSignal && this.authType !== 'vertex') {
