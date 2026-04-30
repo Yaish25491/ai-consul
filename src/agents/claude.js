@@ -13,12 +13,12 @@ export class ClaudeAgent extends Agent {
 
     // Define model tiers based on auth type
     if (config.useVertex) {
-      // Vertex AI models (use sonnet for all tiers - limited model availability)
-      super('Claude', '🔵', 'claude-3-5-sonnet-20240620');
+      // Vertex AI models (only claude-3-5-haiku@20241022 available in this project)
+      super('Claude', '🔵', 'claude-3-5-haiku@20241022');
       this.models = {
-        fast: 'claude-3-5-sonnet-20240620',      // Proposals
-        balanced: 'claude-3-5-sonnet-20240620',   // Debate
-        best: 'claude-3-5-sonnet-20240620'        // Synthesis
+        fast: 'claude-3-5-haiku@20241022',       // Proposals
+        balanced: 'claude-3-5-haiku@20241022',    // Debate
+        best: 'claude-3-5-haiku@20241022'         // Synthesis
       };
     } else {
       // API Key models (Claude 4 series)
