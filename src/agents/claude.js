@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { AnthropicVertex } from '@anthropic-ai/vertex-sdk';
 import chalk from 'chalk';
 import { Agent } from './base.js';
 import { withRetry } from '../utils/retry.js';
@@ -28,10 +29,9 @@ export class ClaudeAgent extends Agent {
       }
       // Vertex AI authentication
       this.authType = 'vertex';
-      const baseURL = `https://${config.region}-aiplatform.googleapis.com/v1/projects/${config.projectId}/locations/${config.region}/publishers/anthropic/models`;
-      this.client = new Anthropic({
-        apiKey: config.apiKey,
-        baseURL
+      this.client = new AnthropicVertex({
+        projectId: config.projectId,
+        region: config.region
       });
     } else {
       if (!config.apiKey) {
