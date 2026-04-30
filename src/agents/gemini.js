@@ -64,9 +64,16 @@ export class GeminiAgent extends Agent {
 
 Query: ${query}
 
-Provide a complete, well-reasoned solution.`;
+Provide a complete, well-reasoned solution. Use your full reasoning capabilities.`;
 
-        const result = await this.client.generateContent(prompt);
+        const result = await this.client.generateContent({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            maxOutputTokens: 8000,
+            temperature: 1.0,
+            topP: 0.95,
+          }
+        });
 
         // Late abort check (in case aborted during request)
         if (abortSignal?.aborted) {
@@ -114,9 +121,16 @@ Original Query: ${query}
 Proposals from all agents:
 ${proposalText}
 
-Review all proposals. Identify strengths and weaknesses. State your refined position or explain why you hold firm. Be constructive and specific.`;
+Review all proposals. Identify strengths and weaknesses. State your refined position or explain why you hold firm. Be constructive and specific. Use your full reasoning capabilities.`;
 
-        const result = await this.client.generateContent(prompt);
+        const result = await this.client.generateContent({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            maxOutputTokens: 8000,
+            temperature: 1.0,
+            topP: 0.95,
+          }
+        });
 
         if (abortSignal?.aborted) {
           const error = new Error('Request aborted');
@@ -171,9 +185,16 @@ Original Query: ${query}
 Debate History:
 ${debateText}
 
-Produce a single, clean consensus answer that incorporates the best reasoning from all rounds. Write directly to the user with no meta-commentary about the debate process.`;
+Produce a single, clean consensus answer that incorporates the best reasoning from all rounds. Write directly to the user with no meta-commentary about the debate process. Use your full reasoning capabilities to synthesize the best answer.`;
 
-        const result = await this.client.generateContent(prompt);
+        const result = await this.client.generateContent({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            maxOutputTokens: 8000,
+            temperature: 1.0,
+            topP: 0.95,
+          }
+        });
 
         if (abortSignal?.aborted) {
           const error = new Error('Request aborted');

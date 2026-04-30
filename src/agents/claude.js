@@ -77,14 +77,18 @@ export class ClaudeAgent extends Agent {
       async (abortSignal) => {
         const requestOptions = {
           model: model, // Use selected model
-          max_tokens: 4096,
+          max_tokens: 8000,
+          thinking: {
+            type: 'enabled',
+            budget_tokens: 4000
+          },
           messages: [{
             role: 'user',
             content: `You are participating in a multi-agent deliberation council. Propose your independent solution to this query without knowing what other agents will suggest.
 
 Query: ${query}
 
-Provide a complete, well-reasoned solution.`
+Provide a complete, well-reasoned solution. Use your full reasoning capabilities.`
           }]
         };
 
@@ -94,7 +98,14 @@ Provide a complete, well-reasoned solution.`
         }
 
         const message = await this.client.messages.create(requestOptions);
-        return message.content?.[0]?.text || '';
+
+        // Extract text from response (may include thinking blocks)
+        const textContent = message.content
+          .filter(block => block.type === 'text')
+          .map(block => block.text)
+          .join('\n');
+
+        return textContent || '';
       },
       {}, // Use default retry config
       retryCallback,
@@ -122,7 +133,11 @@ Provide a complete, well-reasoned solution.`
 
         const requestOptions = {
           model: model, // Use selected model
-          max_tokens: 4096,
+          max_tokens: 8000,
+          thinking: {
+            type: 'enabled',
+            budget_tokens: 4000
+          },
           messages: [{
             role: 'user',
             content: `You are in debate round ${round} of a multi-agent deliberation council.
@@ -132,7 +147,7 @@ Original Query: ${query}
 Proposals from all agents:
 ${proposalText}
 
-Review all proposals. Identify strengths and weaknesses. State your refined position or explain why you hold firm. Be constructive and specific.`
+Review all proposals. Identify strengths and weaknesses. State your refined position or explain why you hold firm. Be constructive and specific. Use your full reasoning capabilities.`
           }]
         };
 
@@ -142,7 +157,14 @@ Review all proposals. Identify strengths and weaknesses. State your refined posi
         }
 
         const message = await this.client.messages.create(requestOptions);
-        return message.content?.[0]?.text || '';
+
+        // Extract text from response (may include thinking blocks)
+        const textContent = message.content
+          .filter(block => block.type === 'text')
+          .map(block => block.text)
+          .join('\n');
+
+        return textContent || '';
       },
       {},
       retryCallback,
@@ -178,7 +200,11 @@ Review all proposals. Identify strengths and weaknesses. State your refined posi
 
         const requestOptions = {
           model: model, // Use selected model
-          max_tokens: 4096,
+          max_tokens: 8000,
+          thinking: {
+            type: 'enabled',
+            budget_tokens: 5000
+          },
           messages: [{
             role: 'user',
             content: `You are synthesizing the final consensus from a multi-agent deliberation.
@@ -188,7 +214,7 @@ Original Query: ${query}
 Debate History:
 ${debateText}
 
-Produce a single, clean consensus answer that incorporates the best reasoning from all rounds. Write directly to the user with no meta-commentary about the debate process.`
+Produce a single, clean consensus answer that incorporates the best reasoning from all rounds. Write directly to the user with no meta-commentary about the debate process. Use your full reasoning capabilities to synthesize the best answer.`
           }]
         };
 
@@ -198,7 +224,14 @@ Produce a single, clean consensus answer that incorporates the best reasoning fr
         }
 
         const message = await this.client.messages.create(requestOptions);
-        return message.content?.[0]?.text || '';
+
+        // Extract text from response (may include thinking blocks)
+        const textContent = message.content
+          .filter(block => block.type === 'text')
+          .map(block => block.text)
+          .join('\n');
+
+        return textContent || '';
       },
       {},
       retryCallback,
