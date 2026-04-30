@@ -28,7 +28,7 @@ console.log('');
     });
     console.log('\n');
     console.log(chalk.dim('Type /help for commands, /exit to quit'));
-    console.log(chalk.dim('Press ESC during deliberation to cancel\n'));
+    console.log(chalk.dim('Press ESC to abort request, Ctrl+C twice to exit\n'));
   }
 
   /**
@@ -95,11 +95,12 @@ console.log('');
   static displayHelp() {
     console.log('\n');
     console.log(chalk.bold('Available Commands:'));
-    console.log('  /help    - Display this help message');
-    console.log('  /agents  - List active council members');
-    console.log('  /exit    - Exit the session');
-    console.log('  /quit    - Exit the session');
-    console.log('  Ctrl+C   - Graceful exit');
+    console.log('  /help      - Display this help message');
+    console.log('  /agents    - List active council members');
+    console.log('  /exit      - Exit the session');
+    console.log('  /quit      - Exit the session');
+    console.log('  ESC        - Abort current request');
+    console.log('  Ctrl+C x2  - Exit the session');
     console.log('\n');
   }
 

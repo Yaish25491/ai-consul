@@ -54,10 +54,18 @@ async function main() {
     rl.prompt();
   });
 
-  // Handle Ctrl+C
+  // Handle Ctrl+C (double press to exit)
+  let lastSigint = 0;
   rl.on('SIGINT', () => {
-    console.log('\n\nGoodbye!\n');
-    process.exit(0);
+    const now = Date.now();
+    if (now - lastSigint < 1000) {
+      console.log('\n\nGoodbye!\n');
+      process.exit(0);
+    } else {
+      console.log('\n(Press Ctrl+C again to exit)');
+      lastSigint = now;
+      rl.prompt();
+    }
   });
 
   // Start prompt
@@ -114,7 +122,7 @@ async function processQuery(query, council, agents) {
   // ESC key handler (byte code 27)
   const escHandler = (chunk) => {
     if (chunk[0] === 27) {
-      console.log('\n\n⚠️  Canceling request...\n');
+      console.log('\n\n⚠️  Aborting current request...\n');
       if (currentSpinner) {
         currentSpinner.stop();
       }
@@ -130,7 +138,7 @@ async function processQuery(query, council, agents) {
       isProcessing = false;
       try {
         process.stdin.setRawMode(false);
-        process.stdin.pause();
+        // Don't pause stdin - readline needs it to continue working
       } catch (error) {
         // Ignore cleanup errors
       }
