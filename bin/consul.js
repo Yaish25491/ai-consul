@@ -138,11 +138,31 @@ async function main() {
   console.log(chalk.bold.cyan(`Mode: ${currentMode}`));
   console.log(chalk.dim('Switch modes with /consulting or /developer\n'));
 
-  // Create readline interface
+  // Available commands for autocomplete
+  const commands = [
+    '/help',
+    '/consulting',
+    '/developer',
+    '/agents',
+    '/view',
+    '/exit',
+    '/quit'
+  ];
+
+  // Autocomplete function
+  const completer = (line) => {
+    const hits = commands.filter((c) => c.startsWith(line));
+    // Show all commands if empty line or no matches
+    return [hits.length ? hits : commands, line];
+  };
+
+  // Create readline interface with autocomplete
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: '> '
+    prompt: '> ',
+    completer: completer,
+    terminal: true
   });
 
   // Handle user input

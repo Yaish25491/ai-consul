@@ -27,7 +27,7 @@ console.log('');
       console.log(`  ${agent.emoji} ${chalk.bold(agent.name)}${authInfo}${modelInfo}`);
     });
     console.log('\n');
-    console.log(chalk.dim('Type /help for commands, /exit to quit'));
+    console.log(chalk.dim('Type / and press TAB to see available commands'));
     console.log(chalk.dim('Press ESC to abort request, Ctrl+C twice to exit\n'));
   }
 
@@ -120,7 +120,8 @@ console.log('');
   static displayHelp() {
     console.log('\n');
     console.log(chalk.bold('Available Commands:'));
-    console.log('\n' + chalk.bold.cyan('Modes:'));
+    console.log(chalk.dim('\nTip: Type / and press TAB for autocomplete\n'));
+    console.log(chalk.bold.cyan('Modes:'));
     console.log('  /consulting     - Multi-agent deliberation mode (default)');
     console.log('  /developer      - Iterative code development mode');
     console.log('\n' + chalk.bold.cyan('General:'));
