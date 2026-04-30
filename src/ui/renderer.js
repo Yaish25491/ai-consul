@@ -128,10 +128,11 @@ console.log('');
     console.log('  /help           - Display this help message');
     console.log('  /agents         - List active council members');
     console.log('  /view <agent>   - View full response from an agent');
-    console.log('  /exit           - Exit the session');
-    console.log('  /quit           - Exit the session');
+    console.log('  /stats          - Show token usage statistics');
+    console.log('  /exit           - Exit the session (shows stats)');
+    console.log('  /quit           - Exit the session (shows stats)');
     console.log('  ESC             - Abort current request');
-    console.log('  Ctrl+C x2       - Exit the session');
+    console.log('  Ctrl+C x2       - Exit the session (shows stats)');
     console.log('\n');
   }
 
@@ -149,6 +150,38 @@ console.log('');
     });
 
     console.log(boxContent);
+    console.log('');
+  }
+
+  /**
+   * Display token usage statistics
+   */
+  static displayTokenStats(tokenUsage) {
+    console.log('\n');
+    console.log(chalk.bold.cyan('📊 Session Token Usage'));
+    console.log(chalk.dim('─'.repeat(60)));
+
+    let totalInput = 0;
+    let totalOutput = 0;
+    let totalAll = 0;
+
+    Object.keys(tokenUsage).forEach(agentName => {
+      const stats = tokenUsage[agentName];
+      totalInput += stats.inputTokens;
+      totalOutput += stats.outputTokens;
+      totalAll += stats.totalTokens;
+
+      console.log(`\n${chalk.bold(agentName)}:`);
+      console.log(`  Input:  ${chalk.cyan(stats.inputTokens.toLocaleString())} tokens`);
+      console.log(`  Output: ${chalk.green(stats.outputTokens.toLocaleString())} tokens`);
+      console.log(`  Total:  ${chalk.yellow(stats.totalTokens.toLocaleString())} tokens`);
+    });
+
+    console.log(chalk.dim('\n' + '─'.repeat(60)));
+    console.log(chalk.bold('\nSession Total:'));
+    console.log(`  Input:  ${chalk.cyan(totalInput.toLocaleString())} tokens`);
+    console.log(`  Output: ${chalk.green(totalOutput.toLocaleString())} tokens`);
+    console.log(`  Total:  ${chalk.yellow(totalAll.toLocaleString())} tokens`);
     console.log('');
   }
 

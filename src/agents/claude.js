@@ -103,6 +103,11 @@ Provide a complete, well-reasoned solution. Use your full reasoning capabilities
 
         const message = await this.client.messages.create(requestOptions);
 
+        // Track token usage
+        if (message.usage) {
+          this.trackUsage(message.usage.input_tokens || 0, message.usage.output_tokens || 0);
+        }
+
         // Extract text from response (may include thinking blocks)
         const textContent = message.content
           .filter(block => block.type === 'text')
@@ -165,6 +170,11 @@ Review all proposals. Identify strengths and weaknesses. State your refined posi
         }
 
         const message = await this.client.messages.create(requestOptions);
+
+        // Track token usage
+        if (message.usage) {
+          this.trackUsage(message.usage.input_tokens || 0, message.usage.output_tokens || 0);
+        }
 
         // Extract text from response (may include thinking blocks)
         const textContent = message.content
@@ -236,6 +246,11 @@ Produce a single, clean consensus answer that incorporates the best reasoning fr
         }
 
         const message = await this.client.messages.create(requestOptions);
+
+        // Track token usage
+        if (message.usage) {
+          this.trackUsage(message.usage.input_tokens || 0, message.usage.output_tokens || 0);
+        }
 
         // Extract text from response (may include thinking blocks)
         const textContent = message.content

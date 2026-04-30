@@ -82,6 +82,15 @@ Provide a complete, well-reasoned solution. Use your full reasoning capabilities
           throw error;
         }
 
+        // Track token usage
+        if (result.response.usageMetadata) {
+          const usage = result.response.usageMetadata;
+          this.trackUsage(
+            usage.promptTokenCount || 0,
+            usage.candidatesTokenCount || 0
+          );
+        }
+
         return result.response.text();
       },
       {},

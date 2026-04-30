@@ -123,11 +123,21 @@ async function main() {
   let council;
   let lastResponses = {}; // Store full responses for /view command
   let currentMode = 'consulting'; // Default mode
+  let tokenUsage = {}; // Track token usage per agent
 
   // Load agents and validate
   try {
     agents = loadAgents();
     council = new Council(agents);
+
+    // Initialize token tracking
+    agents.forEach(agent => {
+      tokenUsage[agent.name] = {
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0
+      };
+    });
   } catch (error) {
     console.error(error.message);
     process.exit(1);
@@ -145,6 +155,7 @@ async function main() {
     '/developer',
     '/agents',
     '/view',
+    '/stats',
     '/exit',
     '/quit'
   ];
@@ -177,7 +188,7 @@ async function main() {
 
     // Handle commands
     if (trimmed.startsWith('/')) {
-      const modeChanged = handleCommand(trimmed, agents, rl, lastResponses, currentMode);
+      const modeChanged = handleCommand(trimmed, agents, rl, lastResponses, currentMode, tokenUsage);
       if (modeChanged) {
         currentMode = modeChanged;
       }
@@ -191,6 +202,12 @@ async function main() {
       } else if (currentMode === 'developer') {
         await processDeveloperMode(trimmed, agents, rl, lastResponses);
       }
+
+      // Sync token usage from agents
+      agents.forEach(agent => {
+        const usage = agent.getUsage();
+        tokenUsage[agent.name] = usage;
+      });
     } catch (error) {
       console.error(chalk.red('\nUnexpected error during query:'), error.message);
     }
@@ -203,7 +220,9 @@ async function main() {
   rl.on('SIGINT', () => {
     const now = Date.now();
     if (now - lastSigint < 1000) {
-      console.log('\n\nGoodbye!\n');
+      console.log('\n');
+      Renderer.displayTokenStats(tokenUsage);
+      console.log(chalk.dim('Goodbye!\n'));
       process.exit(0);
     } else {
       console.log('\n(Press Ctrl+C again to exit)');
@@ -220,7 +239,7 @@ async function main() {
  * Handle special commands
  * Returns new mode if mode changed, otherwise undefined
  */
-function handleCommand(command, agents, rl, lastResponses, currentMode) {
+function handleCommand(command, agents, rl, lastResponses, currentMode, tokenUsage) {
   const parts = command.split(' ');
   const cmd = parts[0].toLowerCase();
   const arg = parts[1];
@@ -250,6 +269,10 @@ function handleCommand(command, agents, rl, lastResponses, currentMode) {
       rl.prompt();
       return 'developer';
 
+    case '/stats':
+      Renderer.displayTokenStats(tokenUsage);
+      break;
+
     case '/view':
       if (!arg) {
         console.log('\n' + chalk.yellow('Usage: /view <agent-name>'));
@@ -273,7 +296,9 @@ function handleCommand(command, agents, rl, lastResponses, currentMode) {
 
     case '/exit':
     case '/quit':
-      console.log('\nGoodbye!\n');
+      console.log('');
+      Renderer.displayTokenStats(tokenUsage);
+      console.log(chalk.dim('Goodbye!\n'));
       process.exit(0);
       break;
 

@@ -7,6 +7,30 @@ export class Agent {
     this.name = name;
     this.emoji = emoji;
     this.model = model;
+    this.usage = {
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0
+    };
+  }
+
+  /**
+   * Track token usage
+   * @param {number} inputTokens - Input tokens used
+   * @param {number} outputTokens - Output tokens generated
+   */
+  trackUsage(inputTokens, outputTokens) {
+    this.usage.inputTokens += inputTokens;
+    this.usage.outputTokens += outputTokens;
+    this.usage.totalTokens += (inputTokens + outputTokens);
+  }
+
+  /**
+   * Get current usage stats
+   * @returns {Object} - Usage statistics
+   */
+  getUsage() {
+    return { ...this.usage };
   }
 
   /**
