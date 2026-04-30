@@ -88,8 +88,8 @@ Provide a complete, well-reasoned solution.`
           }]
         };
 
-        // Add signal if provided (Anthropic SDK supports AbortSignal)
-        if (abortSignal) {
+        // Add signal if provided (only standard Anthropic SDK supports AbortSignal, not Vertex)
+        if (abortSignal && this.authType !== 'vertex') {
           requestOptions.signal = abortSignal;
         }
 
@@ -136,7 +136,8 @@ Review all proposals. Identify strengths and weaknesses. State your refined posi
           }]
         };
 
-        if (abortSignal) {
+        // Add signal if provided (only standard Anthropic SDK supports AbortSignal, not Vertex)
+        if (abortSignal && this.authType !== 'vertex') {
           requestOptions.signal = abortSignal;
         }
 
@@ -191,7 +192,8 @@ Produce a single, clean consensus answer that incorporates the best reasoning fr
           }]
         };
 
-        if (abortSignal) {
+        // Add signal if provided (only standard Anthropic SDK supports AbortSignal, not Vertex)
+        if (abortSignal && this.authType !== 'vertex') {
           requestOptions.signal = abortSignal;
         }
 
