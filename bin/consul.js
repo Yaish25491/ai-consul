@@ -51,8 +51,13 @@ async function main() {
     }
 
     // Process query
-    await processQuery(trimmed, council, agents, rl, lastResponses);
-    rl.prompt();
+    try {
+      await processQuery(trimmed, council, agents, rl, lastResponses);
+    } catch (error) {
+      console.error(chalk.red('\nUnexpected error during query:'), error.message);
+    }
+    // Always return to prompt
+    setImmediate(() => rl.prompt());
   });
 
   // Handle Ctrl+C (double press to exit)
@@ -171,6 +176,16 @@ async function processQuery(query, council, agents, rl, lastResponses) {
       } catch (error) {
         // Ignore cleanup errors
       }
+
+      // Ensure readline interface stays active
+      setImmediate(() => {
+        if (rl && !rl.closed) {
+          // Make sure stdin is flowing and readline can read from it
+          if (process.stdin.isPaused()) {
+            process.stdin.resume();
+          }
+        }
+      });
     }
   };
 
