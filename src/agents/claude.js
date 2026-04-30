@@ -11,14 +11,24 @@ export class ClaudeAgent extends Agent {
       throw new Error('ClaudeAgent requires a config object');
     }
 
-    super('Claude', '🔵', 'claude-sonnet-4-6@20250929');
-
-    // Define model tiers
-    this.models = {
-      fast: 'claude-haiku-4-5@20250929',      // Proposals, simple queries
-      balanced: 'claude-sonnet-4-6@20250929',  // Debate, medium queries
-      best: 'claude-opus-4-7@20250929'         // Synthesis, complex queries
-    };
+    // Define model tiers based on auth type
+    if (config.useVertex) {
+      // Vertex AI models (Claude 3.5 series)
+      super('Claude', '🔵', 'claude-3-5-sonnet-v2@20241022');
+      this.models = {
+        fast: 'claude-3-5-haiku@20241022',       // Proposals, simple queries
+        balanced: 'claude-3-5-sonnet-v2@20241022', // Debate, medium queries
+        best: 'claude-3-5-sonnet-v2@20241022'      // Synthesis (Opus not on Vertex yet)
+      };
+    } else {
+      // API Key models (Claude 4 series)
+      super('Claude', '🔵', 'claude-sonnet-4-6');
+      this.models = {
+        fast: 'claude-haiku-4-5',      // Proposals, simple queries
+        balanced: 'claude-sonnet-4-6',  // Debate, medium queries
+        best: 'claude-opus-4-7'         // Synthesis, complex queries
+      };
+    }
 
     this.defaultModel = this.models.balanced;
     this.currentModel = this.defaultModel;
