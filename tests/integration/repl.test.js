@@ -39,13 +39,13 @@ describe('REPL Integration', () => {
     let output = '';
     proc.stdout.on('data', (data) => {
       output += data.toString();
-      if (output.includes('AI CONSUL')) {
+      if (output.includes('Council Members')) {
         proc.kill();
       }
     });
 
     proc.on('close', () => {
-      expect(output).toContain('AI CONSUL');
+      expect(output).toContain('Multi-Agent Deliberation');
       expect(output).toContain('Council Members');
       expect(output).toContain('[api-key]');
       done();
@@ -66,13 +66,13 @@ describe('REPL Integration', () => {
     let output = '';
     proc.stdout.on('data', (data) => {
       output += data.toString();
-      if (output.includes('AI CONSUL')) {
+      if (output.includes('Council Members')) {
         proc.kill();
       }
     });
 
     proc.on('close', () => {
-      expect(output).toContain('AI CONSUL');
+      expect(output).toContain('Multi-Agent Deliberation');
       expect(output).toContain('[vertex]');
       done();
     });
@@ -92,7 +92,7 @@ describe('REPL Integration', () => {
     let output = '';
     proc.stdout.on('data', (data) => {
       output += data.toString();
-      if (output.includes('AI CONSUL')) {
+      if (output.includes('Council Members')) {
         proc.kill();
       }
     });

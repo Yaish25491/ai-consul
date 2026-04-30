@@ -7,11 +7,19 @@ export class Renderer {
    */
   static displayBanner(agents) {
     console.log('\n');
-    console.log(chalk.bold.cyan('╔══════════════════════════════════════════╗'));
-    console.log(chalk.bold.cyan('║            AI CONSUL v1.1                ║'));
-    console.log(chalk.bold.cyan('║   Multi-Agent Deliberation Council       ║'));
-    console.log(chalk.bold.cyan('╚══════════════════════════════════════════╝'));
-    console.log('\n');
+console.log(chalk.bold.cyan('   ╔════════════════════════════════════════════════════════╗'));
+console.log(chalk.bold.cyan('   ║                                                        ║'));
+console.log(chalk.bold.cyan('   ║    ██████╗  ██████╗ ███╗   ██╗███████╗██╗   ██╗██╗     ║'));
+console.log(chalk.bold.cyan('   ║   ██╔════╝ ██╔═══██╗████╗  ██║██╔════╝██║   ██║██║     ║'));
+console.log(chalk.bold.cyan('   ║   ██║      ██║   ██║██╔██╗ ██║███████╗██║   ██║██║     ║'));
+console.log(chalk.bold.cyan('   ║   ██║      ██║   ██║██║╚██╗██║╚════██║██║   ██║██║     ║'));
+console.log(chalk.bold.cyan('   ║   ╚██████╗ ╚██████╔╝██║ ╚████║███████║╚██████╔╝███████╗║'));
+console.log(chalk.bold.cyan('   ║    ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚══════╝║'));
+console.log(chalk.bold.cyan('   ║                                                        ║'));
+console.log(chalk.bold.cyan('   ║             AI Multi-Agent Deliberation v1.1           ║'));
+console.log(chalk.bold.cyan('   ║                                                        ║'));
+console.log(chalk.bold.cyan('   ╚════════════════════════════════════════════════════════╝'));
+console.log('');
     console.log(chalk.bold('Council Members:'));
     agents.forEach(agent => {
       const authInfo = agent.authType ? chalk.dim(` [${agent.authType}]`) : '';

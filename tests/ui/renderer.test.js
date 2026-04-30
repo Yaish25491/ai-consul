@@ -22,7 +22,8 @@ describe('Renderer', () => {
 
     expect(consoleLogSpy).toHaveBeenCalled();
     const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
-    expect(output).toContain('AI CONSUL');
+    expect(output).toContain('Multi-Agent Deliberation');
+    expect(output).toContain('Council Members');
     expect(output).toContain('Claude');
     expect(output).toContain('Gemini');
   });
