@@ -8,7 +8,14 @@ export class GeminiAgent extends Agent {
     this.client = genAI.getGenerativeModel({ model: this.model });
   }
 
-  async propose(query) {
+  async propose(query, signal = null) {
+    // Early abort check (Gemini SDK doesn't support AbortSignal natively)
+    if (signal?.aborted) {
+      const error = new Error('Request aborted');
+      error.name = 'AbortError';
+      throw error;
+    }
+
     const prompt = `You are participating in a multi-agent deliberation council. Propose your independent solution to this query without knowing what other agents will suggest.
 
 Query: ${query}
@@ -16,10 +23,24 @@ Query: ${query}
 Provide a complete, well-reasoned solution.`;
 
     const result = await this.client.generateContent(prompt);
+
+    // Late abort check (in case aborted during request)
+    if (signal?.aborted) {
+      const error = new Error('Request aborted');
+      error.name = 'AbortError';
+      throw error;
+    }
+
     return result.response.text();
   }
 
-  async debate(query, proposals, round) {
+  async debate(query, proposals, round, signal = null) {
+    if (signal?.aborted) {
+      const error = new Error('Request aborted');
+      error.name = 'AbortError';
+      throw error;
+    }
+
     const proposalText = proposals
       .map(p => `**${p.agent}**: ${p.proposal}`)
       .join('\n\n');
@@ -34,10 +55,23 @@ ${proposalText}
 Review all proposals. Identify strengths and weaknesses. State your refined position or explain why you hold firm. Be constructive and specific.`;
 
     const result = await this.client.generateContent(prompt);
+
+    if (signal?.aborted) {
+      const error = new Error('Request aborted');
+      error.name = 'AbortError';
+      throw error;
+    }
+
     return result.response.text();
   }
 
-  async synthesize(query, history) {
+  async synthesize(query, history, signal = null) {
+    if (signal?.aborted) {
+      const error = new Error('Request aborted');
+      error.name = 'AbortError';
+      throw error;
+    }
+
     const debateText = history
       .map(h => {
         const responses = h.responses
@@ -57,6 +91,13 @@ ${debateText}
 Produce a single, clean consensus answer that incorporates the best reasoning from all rounds. Write directly to the user with no meta-commentary about the debate process.`;
 
     const result = await this.client.generateContent(prompt);
+
+    if (signal?.aborted) {
+      const error = new Error('Request aborted');
+      error.name = 'AbortError';
+      throw error;
+    }
+
     return result.response.text();
   }
 }

@@ -30,8 +30,8 @@ export class ClaudeAgent extends Agent {
     }
   }
 
-  async propose(query) {
-    const message = await this.client.messages.create({
+  async propose(query, signal = null) {
+    const requestOptions = {
       model: this.model,
       max_tokens: 4096,
       messages: [{
@@ -42,17 +42,23 @@ Query: ${query}
 
 Provide a complete, well-reasoned solution.`
       }]
-    });
+    };
 
+    // Add signal if provided (Anthropic SDK supports AbortSignal)
+    if (signal) {
+      requestOptions.signal = signal;
+    }
+
+    const message = await this.client.messages.create(requestOptions);
     return message.content?.[0]?.text || '';
   }
 
-  async debate(query, proposals, round) {
+  async debate(query, proposals, round, signal = null) {
     const proposalText = proposals
       .map(p => `**${p.agent}**: ${p.proposal}`)
       .join('\n\n');
 
-    const message = await this.client.messages.create({
+    const requestOptions = {
       model: this.model,
       max_tokens: 4096,
       messages: [{
@@ -66,12 +72,17 @@ ${proposalText}
 
 Review all proposals. Identify strengths and weaknesses. State your refined position or explain why you hold firm. Be constructive and specific.`
       }]
-    });
+    };
 
+    if (signal) {
+      requestOptions.signal = signal;
+    }
+
+    const message = await this.client.messages.create(requestOptions);
     return message.content?.[0]?.text || '';
   }
 
-  async synthesize(query, history) {
+  async synthesize(query, history, signal = null) {
     const debateText = history
       .map(h => {
         const responses = h.responses
@@ -81,7 +92,7 @@ Review all proposals. Identify strengths and weaknesses. State your refined posi
       })
       .join('\n\n');
 
-    const message = await this.client.messages.create({
+    const requestOptions = {
       model: this.model,
       max_tokens: 4096,
       messages: [{
@@ -95,8 +106,13 @@ ${debateText}
 
 Produce a single, clean consensus answer that incorporates the best reasoning from all rounds. Write directly to the user with no meta-commentary about the debate process.`
       }]
-    });
+    };
 
+    if (signal) {
+      requestOptions.signal = signal;
+    }
+
+    const message = await this.client.messages.create(requestOptions);
     return message.content?.[0]?.text || '';
   }
 }

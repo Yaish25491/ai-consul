@@ -9,15 +9,15 @@ class MockAgent {
     this.model = 'mock-model';
   }
 
-  async propose(query) {
+  async propose(query, signal = null) {
     return `${this.name} proposal for: ${query}`;
   }
 
-  async debate(query, proposals, round) {
+  async debate(query, proposals, round, signal = null) {
     return `${this.name} debate round ${round}`;
   }
 
-  async synthesize(query, history) {
+  async synthesize(query, history, signal = null) {
     return `${this.name} synthesis`;
   }
 }
@@ -63,10 +63,11 @@ describe('Council', () => {
     expect(debateSpy).toHaveBeenCalledWith(
       'Test query',
       expect.arrayContaining([
-        expect.objectContaining({ agent: 'Agent1' }),
-        expect.objectContaining({ agent: 'Agent2' })
+        expect.objectContaining({ agent: 'Agent1', aborted: false }),
+        expect.objectContaining({ agent: 'Agent2', aborted: false })
       ]),
-      expect.any(Number)
+      expect.any(Number),
+      null // signal parameter
     );
   });
 });

@@ -2,6 +2,7 @@
 
 import readline from 'readline';
 import ora from 'ora';
+import chalk from 'chalk';
 import { loadAgents } from '../src/agents/index.js';
 import { Council } from '../src/core/council.js';
 import { Renderer } from '../src/ui/renderer.js';
@@ -98,54 +99,152 @@ function handleCommand(command, agents, rl) {
  * Process user query through deliberation
  */
 async function processQuery(query, council, agents) {
+  const abortController = new AbortController();
+  let isProcessing = true;
+  let currentSpinner = null;
+
+  // Enable raw mode to capture ESC key
+  try {
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+  } catch (error) {
+    console.warn(chalk.yellow('⚠️  ESC cancellation unavailable (raw mode not supported)'));
+  }
+
+  // ESC key handler (byte code 27)
+  const escHandler = (chunk) => {
+    if (chunk[0] === 27) {
+      console.log('\n\n⚠️  Canceling request...\n');
+      if (currentSpinner) {
+        currentSpinner.stop();
+      }
+      abortController.abort();
+      cleanup();
+    }
+  };
+
+  process.stdin.on('data', escHandler);
+
+  const cleanup = () => {
+    if (isProcessing) {
+      isProcessing = false;
+      try {
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+      process.stdin.removeListener('data', escHandler);
+    }
+  };
+
   try {
     // Phase 1: Proposals
     Renderer.displayPhaseHeader('PHASE 1: PROPOSALS');
-    const spinner1 = ora('Generating proposals...').start();
+    currentSpinner = ora('Generating proposals... (Press ESC to cancel)').start();
 
-    const proposals = await council._runProposals(query);
-    spinner1.stop();
+    const proposals = await council._runProposals(query, abortController.signal);
+    currentSpinner.stop();
+    currentSpinner = null;
 
-    proposals.forEach(({ agent, proposal }) => {
+    // Filter out aborted agents
+    const completedProposals = proposals.filter(p => !p.aborted);
+    const abortedProposalsCount = proposals.filter(p => p.aborted).length;
+
+    if (completedProposals.length === 0) {
+      console.log(chalk.yellow('\n✗ All agents canceled. No proposals to show.\n'));
+      return;
+    }
+
+    if (abortedProposalsCount > 0) {
+      const abortedAgents = proposals.filter(p => p.aborted).map(p => p.agent);
+      console.log(chalk.dim(`\n(Canceled: ${abortedAgents.join(', ')})\n`));
+    }
+
+    completedProposals.forEach(({ agent, proposal }) => {
       const agentObj = agents.find(a => a.name === agent);
       Renderer.displayAgentResponse(agentObj, proposal);
     });
+
+    // Check if aborted before continuing
+    if (abortController.signal.aborted) {
+      console.log(chalk.yellow('\n✗ Deliberation canceled by user.\n'));
+      return;
+    }
 
     // Phase 2: Debate
     Renderer.displayPhaseHeader('PHASE 2: DEBATE');
     const debates = [];
 
     for (let round = 1; round <= 2; round++) {
-      const spinner2 = ora(`Debate round ${round}...`).start();
+      if (abortController.signal.aborted) {
+        break;
+      }
+
+      currentSpinner = ora(`Debate round ${round}... (Press ESC to cancel)`).start();
 
       const debatePromises = agents.map(async (agent) => {
-        const response = await agent.debate(query, proposals, round);
+        const response = await agent.debate(query, completedProposals, round, abortController.signal);
         return { agent: agent.name, response };
       });
 
       const responses = await Promise.all(debatePromises);
-      spinner2.stop();
+      currentSpinner.stop();
+      currentSpinner = null;
+
+      // Filter out aborted responses
+      const completedResponses = responses.filter(r => !r.aborted);
+      const abortedResponsesCount = responses.filter(r => r.aborted).length;
+
+      if (completedResponses.length === 0) {
+        console.log(chalk.yellow(`\n✗ Round ${round} canceled.\n`));
+        break;
+      }
 
       console.log(`\n--- Round ${round} ---\n`);
-      responses.forEach(({ agent, response }) => {
+      if (abortedResponsesCount > 0) {
+        const abortedAgents = responses.filter(r => r.aborted).map(r => r.agent);
+        console.log(chalk.dim(`(Canceled: ${abortedAgents.join(', ')})\n`));
+      }
+
+      completedResponses.forEach(({ agent, response }) => {
         const agentObj = agents.find(a => a.name === agent);
         Renderer.displayAgentResponse(agentObj, response);
       });
 
-      debates.push({ round, responses });
+      debates.push({ round, responses: completedResponses });
+    }
+
+    if (abortController.signal.aborted || debates.length === 0) {
+      console.log(chalk.yellow('\n✗ Deliberation canceled by user.\n'));
+      return;
     }
 
     // Phase 3: Synthesis
     Renderer.displayPhaseHeader('PHASE 3: SYNTHESIS');
-    const spinner3 = ora('Synthesizing consensus...').start();
+    currentSpinner = ora('Synthesizing consensus... (Press ESC to cancel)').start();
 
-    const consensus = await council._runSynthesis(query, debates);
-    spinner3.stop();
+    const consensus = await council._runSynthesis(query, debates, abortController.signal);
+    currentSpinner.stop();
+    currentSpinner = null;
 
-    Renderer.displayVerdict(consensus);
+    if (consensus) {
+      Renderer.displayVerdict(consensus);
+    } else {
+      console.log(chalk.yellow('\n✗ Synthesis canceled by user.\n'));
+    }
 
   } catch (error) {
-    Renderer.displayError(error.message);
+    if (currentSpinner) {
+      currentSpinner.stop();
+    }
+    if (error.name === 'AbortError') {
+      Renderer.displayError('Request canceled by user');
+    } else {
+      Renderer.displayError(error.message);
+    }
+  } finally {
+    cleanup();
   }
 }
 

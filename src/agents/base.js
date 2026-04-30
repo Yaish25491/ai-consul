@@ -12,9 +12,10 @@ export class Agent {
   /**
    * Phase 1: Generate independent proposal
    * @param {string} query - User's question
+   * @param {AbortSignal} signal - Optional abort signal for cancellation
    * @returns {Promise<string>} - Agent's proposal
    */
-  async propose(query) {
+  async propose(query, signal = null) {
     throw new Error('propose() must be implemented by subclass');
   }
 
@@ -23,9 +24,10 @@ export class Agent {
    * @param {string} query - Original user question
    * @param {Array<{agent: string, proposal: string}>} proposals - All proposals from Phase 1
    * @param {number} round - Current debate round number
+   * @param {AbortSignal} signal - Optional abort signal for cancellation
    * @returns {Promise<string>} - Agent's debate response
    */
-  async debate(query, proposals, round) {
+  async debate(query, proposals, round, signal = null) {
     throw new Error('debate() must be implemented by subclass');
   }
 
@@ -33,9 +35,10 @@ export class Agent {
    * Phase 3: Synthesize consensus from debate
    * @param {string} query - Original user question
    * @param {Array<{round: number, responses: Array}>} history - Full debate history
+   * @param {AbortSignal} signal - Optional abort signal for cancellation
    * @returns {Promise<string>} - Final consensus answer
    */
-  async synthesize(query, history) {
+  async synthesize(query, history, signal = null) {
     throw new Error('synthesize() must be implemented by subclass');
   }
 }
