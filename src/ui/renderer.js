@@ -35,27 +35,34 @@ console.log('');
    * Display phase transition header
    */
   static displayPhaseHeader(phaseName) {
-    const width = 60;
-    const padding = Math.floor((width - phaseName.length - 2) / 2);
-    const line = '═'.repeat(width);
-    const header = '═'.repeat(padding) + ` ${phaseName} ` + '═'.repeat(padding);
-
     console.log('\n');
-    console.log(chalk.yellow(header));
-    console.log('\n');
+    console.log(chalk.bold.yellow(`▸ ${phaseName}`));
+    console.log(chalk.dim('─'.repeat(50)));
+    console.log('');
   }
 
   /**
-   * Display agent's response with color coding
+   * Display agent's response in a contained box
    */
   static displayAgentResponse(agent, response, modelUsed = null) {
     const color = this._getAgentColor(agent.name);
-    const modelInfo = modelUsed ? chalk.dim(` [${modelUsed}]`) : '';
-    const header = `${agent.emoji} ${chalk.bold[color](agent.name)}${modelInfo}`;
+    const modelInfo = modelUsed ? chalk.dim(` ${modelUsed}`) : '';
 
-    console.log(header);
-    console.log(chalk[color](response));
-    console.log('\n');
+    // Truncate response if too long (keep first 500 chars)
+    const truncated = response.length > 500
+      ? response.substring(0, 500) + chalk.dim('...\n[Response truncated for display]')
+      : response;
+
+    const boxContent = boxen(truncated, {
+      padding: { top: 0, bottom: 0, left: 1, right: 1 },
+      margin: { top: 0, bottom: 1, left: 0, right: 0 },
+      borderStyle: 'round',
+      borderColor: color,
+      title: `${agent.emoji} ${agent.name}${modelInfo}`,
+      titleAlignment: 'left'
+    });
+
+    console.log(boxContent);
   }
 
   /**
@@ -63,17 +70,16 @@ console.log('');
    */
   static displayVerdict(consensus) {
     const boxContent = boxen(consensus, {
-      padding: 1,
-      margin: 1,
+      padding: { top: 0, bottom: 0, left: 1, right: 1 },
+      margin: { top: 1, bottom: 0, left: 0, right: 0 },
       borderStyle: 'double',
       borderColor: 'green',
       title: '✨ CONSENSUS',
       titleAlignment: 'center'
     });
 
-    console.log('\n');
     console.log(boxContent);
-    console.log('\n');
+    console.log('');
   }
 
   /**

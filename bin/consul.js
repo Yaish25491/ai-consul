@@ -209,10 +209,10 @@ async function processQuery(query, council, agents, rl) {
         break;
       }
 
-      console.log(`\n--- Round ${round} ---\n`);
+      console.log(chalk.bold.cyan(`\n▸ Round ${round}\n`));
       if (abortedResponsesCount > 0) {
         const abortedAgents = responses.filter(r => r.aborted).map(r => r.agent);
-        console.log(chalk.dim(`(Canceled: ${abortedAgents.join(', ')})\n`));
+        console.log(chalk.dim(`  (Canceled: ${abortedAgents.join(', ')})\n`));
       }
 
       completedResponses.forEach(({ agent, response }) => {
