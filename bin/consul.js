@@ -3,6 +3,7 @@
 import readline from 'readline';
 import ora from 'ora';
 import chalk from 'chalk';
+import { readFileSync } from 'fs';
 import { loadAgents } from '../src/agents/index.js';
 import { Council } from '../src/core/council.js';
 import { Renderer } from '../src/ui/renderer.js';
@@ -156,6 +157,8 @@ async function main() {
     '/agents',
     '/view',
     '/stats',
+    '/prompt',
+    '/file',
     '/exit',
     '/quit'
   ];
@@ -176,8 +179,50 @@ async function main() {
     terminal: true
   });
 
+  // Multi-line input state
+  let multiLineMode = false;
+  let multiLineBuffer = [];
+
   // Handle user input
   rl.on('line', async (input) => {
+    // Multi-line mode handling
+    if (multiLineMode) {
+      if (input.trim() === 'END') {
+        // Exit multi-line mode and process accumulated input
+        multiLineMode = false;
+        const fullInput = multiLineBuffer.join('\n');
+        multiLineBuffer = [];
+
+        console.log(chalk.dim('\n[Multi-line input received - processing...]\n'));
+
+        // Process the full multi-line input
+        try {
+          if (currentMode === 'consulting') {
+            await processQuery(fullInput, council, agents, rl, lastResponses);
+          } else if (currentMode === 'developer') {
+            await processDeveloperMode(fullInput, agents, rl, lastResponses);
+          }
+
+          // Sync token usage from agents
+          agents.forEach(agent => {
+            const usage = agent.getUsage();
+            tokenUsage[agent.name] = usage;
+          });
+        } catch (error) {
+          console.error(chalk.red('\nUnexpected error during query:'), error.message);
+        }
+
+        setImmediate(() => rl.prompt());
+        return;
+      } else {
+        // Accumulate line
+        multiLineBuffer.push(input);
+        rl.setPrompt(chalk.dim('... '));
+        rl.prompt();
+        return;
+      }
+    }
+
     const trimmed = input.trim();
 
     // Handle empty input
@@ -188,9 +233,17 @@ async function main() {
 
     // Handle commands
     if (trimmed.startsWith('/')) {
-      const modeChanged = handleCommand(trimmed, agents, rl, lastResponses, currentMode, tokenUsage);
-      if (modeChanged) {
-        currentMode = modeChanged;
+      const commandResult = handleCommand(trimmed, agents, council, rl, lastResponses, currentMode, tokenUsage);
+      if (commandResult === 'multiline') {
+        multiLineMode = true;
+        multiLineBuffer = [];
+        console.log(chalk.cyan('\nEntering multi-line mode. Type your prompt across multiple lines.'));
+        console.log(chalk.dim('Type END on a new line to finish and submit.\n'));
+        rl.setPrompt(chalk.dim('... '));
+        rl.prompt();
+        return;
+      } else if (commandResult) {
+        currentMode = commandResult;
       }
       return;
     }
@@ -237,9 +290,9 @@ async function main() {
 
 /**
  * Handle special commands
- * Returns new mode if mode changed, otherwise undefined
+ * Returns new mode if mode changed, 'multiline' for multi-line mode, otherwise undefined
  */
-function handleCommand(command, agents, rl, lastResponses, currentMode, tokenUsage) {
+function handleCommand(command, agents, council, rl, lastResponses, currentMode, tokenUsage) {
   const parts = command.split(' ');
   const cmd = parts[0].toLowerCase();
   const arg = parts[1];
@@ -271,6 +324,44 @@ function handleCommand(command, agents, rl, lastResponses, currentMode, tokenUsa
 
     case '/stats':
       Renderer.displayTokenStats(tokenUsage);
+      break;
+
+    case '/prompt':
+      rl.prompt();
+      return 'multiline';
+
+    case '/file':
+      if (!arg) {
+        console.log('\n' + chalk.yellow('Usage: /file <path>'));
+        console.log(chalk.dim('Load and execute a prompt from a text file\n'));
+      } else {
+        try {
+          const fileContent = readFileSync(arg, 'utf-8');
+          console.log(chalk.dim(`\n[Loaded ${fileContent.split('\n').length} lines from ${arg}]\n`));
+
+          // Process the file content immediately
+          setImmediate(async () => {
+            try {
+              if (currentMode === 'consulting') {
+                await processQuery(fileContent, council, agents, rl, lastResponses);
+              } else if (currentMode === 'developer') {
+                await processDeveloperMode(fileContent, agents, rl, lastResponses);
+              }
+
+              // Sync token usage from agents
+              agents.forEach(agent => {
+                const usage = agent.getUsage();
+                tokenUsage[agent.name] = usage;
+              });
+            } catch (error) {
+              console.error(chalk.red('\nUnexpected error during query:'), error.message);
+            }
+            rl.prompt();
+          });
+        } catch (error) {
+          console.log(chalk.red(`\n✗ Error reading file: ${error.message}\n`));
+        }
+      }
       break;
 
     case '/view':
