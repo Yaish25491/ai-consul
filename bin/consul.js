@@ -184,6 +184,11 @@ async function main() {
   let multiLineBuffer = [];
   let pastedTextCounter = 1;
 
+  // Automatic paste detection state
+  let pasteBuffer = [];
+  let pasteTimer = null;
+  const PASTE_THRESHOLD_MS = 50; // Lines arriving within 50ms are considered pasted
+
   // Handle user input
   rl.on('line', async (input) => {
     // Multi-line mode handling
@@ -239,8 +244,15 @@ async function main() {
       return;
     }
 
-    // Handle commands
+    // Handle commands (bypass paste detection for commands)
     if (trimmed.startsWith('/')) {
+      // Cancel any pending paste buffer
+      if (pasteTimer) {
+        clearTimeout(pasteTimer);
+        pasteTimer = null;
+        pasteBuffer = [];
+      }
+
       const commandResult = handleCommand(trimmed, agents, council, rl, lastResponses, currentMode, tokenUsage, pastedTextCounter);
       if (commandResult.action === 'multiline') {
         multiLineMode = true;
@@ -259,29 +271,59 @@ async function main() {
       return;
     }
 
-    // Process query based on current mode
-    try {
-      if (currentMode === 'consulting') {
-        await processQuery(trimmed, council, agents, rl, lastResponses);
-      } else if (currentMode === 'developer') {
-        await processDeveloperMode(trimmed, agents, rl, lastResponses);
+    // Automatic paste detection - buffer rapid line inputs
+    pasteBuffer.push(input);
+
+    // Clear existing timer and set new one
+    if (pasteTimer) {
+      clearTimeout(pasteTimer);
+    }
+
+    pasteTimer = setTimeout(async () => {
+      // Timer expired, no more lines coming - process buffered input
+      const fullInput = pasteBuffer.join('\n');
+      const lineCount = pasteBuffer.length;
+      pasteBuffer = [];
+      pasteTimer = null;
+
+      // Display compressed representation if more than 3 lines
+      if (lineCount > 3) {
+        console.log(chalk.dim(`\n📋 Pasted text #${pastedTextCounter} +${lineCount} lines\n`));
+        pastedTextCounter++;
       }
 
-      // Sync token usage from agents
-      agents.forEach(agent => {
-        const usage = agent.getUsage();
-        tokenUsage[agent.name] = usage;
-      });
-    } catch (error) {
-      console.error(chalk.red('\nUnexpected error during query:'), error.message);
-    }
-    // Always return to prompt
-    setImmediate(() => rl.prompt());
+      // Process the input
+      try {
+        if (currentMode === 'consulting') {
+          await processQuery(fullInput, council, agents, rl, lastResponses);
+        } else if (currentMode === 'developer') {
+          await processDeveloperMode(fullInput, agents, rl, lastResponses);
+        }
+
+        // Sync token usage from agents
+        agents.forEach(agent => {
+          const usage = agent.getUsage();
+          tokenUsage[agent.name] = usage;
+        });
+      } catch (error) {
+        console.error(chalk.red('\nUnexpected error during query:'), error.message);
+      }
+
+      // Return to prompt
+      setImmediate(() => rl.prompt());
+    }, PASTE_THRESHOLD_MS);
   });
 
   // Handle Ctrl+C (double press to exit)
   let lastSigint = 0;
   rl.on('SIGINT', () => {
+    // Clear any pending paste timer
+    if (pasteTimer) {
+      clearTimeout(pasteTimer);
+      pasteTimer = null;
+      pasteBuffer = [];
+    }
+
     const now = Date.now();
     if (now - lastSigint < 1000) {
       console.log('\n');
