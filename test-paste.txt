@@ -1,0 +1,7 @@
+This is a test of multi-line paste detection.
+The CLI should now automatically detect when multiple lines
+are pasted in rapid succession and buffer them together
+instead of processing each line individually.
+
+This avoids the issue where each line triggered a separate
+deliberation session, causing dozens of parallel queries.

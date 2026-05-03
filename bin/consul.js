@@ -187,7 +187,7 @@ async function main() {
   // Automatic paste detection state
   let pasteBuffer = [];
   let pasteTimer = null;
-  const PASTE_THRESHOLD_MS = 50; // Lines arriving within 50ms are considered pasted
+  const PASTE_THRESHOLD_MS = 1000; // Wait 1 second after last line to process (handles chunked pastes)
 
   // Handle user input
   rl.on('line', async (input) => {
