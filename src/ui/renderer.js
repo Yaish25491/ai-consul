@@ -126,6 +126,7 @@ console.log('');
     console.log('  /developer      - Iterative code development mode');
     console.log('\n' + chalk.bold.cyan('Input:'));
     console.log('  /prompt         - Enter multi-line mode (type END to finish)');
+    console.log('                    Large inputs (>3 lines) shown as: 📋 Pasted text #1 +59 lines');
     console.log('  /file <path>    - Load and execute prompt from a file');
     console.log('\n' + chalk.bold.cyan('General:'));
     console.log('  /help           - Display this help message');

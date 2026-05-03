@@ -182,6 +182,7 @@ async function main() {
   // Multi-line input state
   let multiLineMode = false;
   let multiLineBuffer = [];
+  let pastedTextCounter = 1;
 
   // Handle user input
   rl.on('line', async (input) => {
@@ -191,9 +192,16 @@ async function main() {
         // Exit multi-line mode and process accumulated input
         multiLineMode = false;
         const fullInput = multiLineBuffer.join('\n');
+        const lineCount = multiLineBuffer.length;
         multiLineBuffer = [];
 
-        console.log(chalk.dim('\n[Multi-line input received - processing...]\n'));
+        // Display compressed representation if more than 3 lines
+        if (lineCount > 3) {
+          console.log(chalk.dim(`\n📋 Pasted text #${pastedTextCounter} +${lineCount} lines\n`));
+          pastedTextCounter++;
+        } else {
+          console.log(chalk.dim('\n[Multi-line input received - processing...]\n'));
+        }
 
         // Process the full multi-line input
         try {
@@ -337,7 +345,15 @@ function handleCommand(command, agents, council, rl, lastResponses, currentMode,
       } else {
         try {
           const fileContent = readFileSync(arg, 'utf-8');
-          console.log(chalk.dim(`\n[Loaded ${fileContent.split('\n').length} lines from ${arg}]\n`));
+          const lineCount = fileContent.split('\n').length;
+
+          // Display compressed representation if more than 3 lines
+          if (lineCount > 3) {
+            console.log(chalk.dim(`\n📋 Pasted text #${pastedTextCounter} +${lineCount} lines (from ${arg})\n`));
+            pastedTextCounter++;
+          } else {
+            console.log(chalk.dim(`\n[Loaded ${lineCount} lines from ${arg}]\n`));
+          }
 
           // Process the file content immediately
           setImmediate(async () => {
