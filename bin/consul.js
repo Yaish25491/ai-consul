@@ -241,8 +241,8 @@ async function main() {
 
     // Handle commands
     if (trimmed.startsWith('/')) {
-      const commandResult = handleCommand(trimmed, agents, council, rl, lastResponses, currentMode, tokenUsage);
-      if (commandResult === 'multiline') {
+      const commandResult = handleCommand(trimmed, agents, council, rl, lastResponses, currentMode, tokenUsage, pastedTextCounter);
+      if (commandResult.action === 'multiline') {
         multiLineMode = true;
         multiLineBuffer = [];
         console.log(chalk.cyan('\nEntering multi-line mode. Type your prompt across multiple lines.'));
@@ -250,8 +250,11 @@ async function main() {
         rl.setPrompt(chalk.dim('... '));
         rl.prompt();
         return;
-      } else if (commandResult) {
-        currentMode = commandResult;
+      } else if (commandResult.counter !== undefined) {
+        pastedTextCounter = commandResult.counter;
+      }
+      if (commandResult.mode) {
+        currentMode = commandResult.mode;
       }
       return;
     }
@@ -298,9 +301,9 @@ async function main() {
 
 /**
  * Handle special commands
- * Returns new mode if mode changed, 'multiline' for multi-line mode, otherwise undefined
+ * Returns object with: { action, mode, counter }
  */
-function handleCommand(command, agents, council, rl, lastResponses, currentMode, tokenUsage) {
+function handleCommand(command, agents, council, rl, lastResponses, currentMode, tokenUsage, pastedTextCounter) {
   const parts = command.split(' ');
   const cmd = parts[0].toLowerCase();
   const arg = parts[1];
@@ -322,13 +325,13 @@ function handleCommand(command, agents, council, rl, lastResponses, currentMode,
       console.log(chalk.green('\n✓ Switched to CONSULTING mode'));
       console.log(chalk.dim('Agents deliberate to find the best answer\n'));
       rl.prompt();
-      return 'consulting';
+      return { mode: 'consulting' };
 
     case '/developer':
       console.log(chalk.green('\n✓ Switched to DEVELOPER mode'));
       console.log(chalk.dim('Iterative code development with review cycles\n'));
       rl.prompt();
-      return 'developer';
+      return { mode: 'developer' };
 
     case '/stats':
       Renderer.displayTokenStats(tokenUsage);
@@ -336,7 +339,7 @@ function handleCommand(command, agents, council, rl, lastResponses, currentMode,
 
     case '/prompt':
       rl.prompt();
-      return 'multiline';
+      return { action: 'multiline' };
 
     case '/file':
       if (!arg) {
@@ -346,11 +349,12 @@ function handleCommand(command, agents, council, rl, lastResponses, currentMode,
         try {
           const fileContent = readFileSync(arg, 'utf-8');
           const lineCount = fileContent.split('\n').length;
+          let newCounter = pastedTextCounter;
 
           // Display compressed representation if more than 3 lines
           if (lineCount > 3) {
             console.log(chalk.dim(`\n📋 Pasted text #${pastedTextCounter} +${lineCount} lines (from ${arg})\n`));
-            pastedTextCounter++;
+            newCounter = pastedTextCounter + 1;
           } else {
             console.log(chalk.dim(`\n[Loaded ${lineCount} lines from ${arg}]\n`));
           }
@@ -374,6 +378,8 @@ function handleCommand(command, agents, council, rl, lastResponses, currentMode,
             }
             rl.prompt();
           });
+
+          return { counter: newCounter };
         } catch (error) {
           console.log(chalk.red(`\n✗ Error reading file: ${error.message}\n`));
         }
@@ -415,6 +421,7 @@ function handleCommand(command, agents, council, rl, lastResponses, currentMode,
   }
 
   rl.prompt();
+  return {};
 }
 
 /**
