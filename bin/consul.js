@@ -124,6 +124,7 @@ async function main() {
   let council;
   let lastResponses = {}; // Store full responses for /view command
   let currentMode = 'consulting'; // Default mode
+  let debateMode = 'normal'; // normal (2 rounds), extra (max 10), unlimited
   let tokenUsage = {}; // Track token usage per agent
 
   // Load agents and validate
@@ -147,13 +148,18 @@ async function main() {
   // Display banner
   Renderer.displayBanner(agents);
   console.log(chalk.bold.cyan(`Mode: ${currentMode}`));
-  console.log(chalk.dim('Switch modes with /consulting or /developer\n'));
+  console.log(chalk.bold.cyan(`Debate: ${debateMode}`));
+  console.log(chalk.dim('Switch modes with /consulting or /developer'));
+  console.log(chalk.dim('Debate modes: /normal-debate, /extra-debate, /unlimited-debate\n'));
 
   // Available commands for autocomplete
   const commands = [
     '/help',
     '/consulting',
     '/developer',
+    '/normal-debate',
+    '/extra-debate',
+    '/unlimited-debate',
     '/agents',
     '/view',
     '/stats',
@@ -211,7 +217,7 @@ async function main() {
         // Process the full multi-line input
         try {
           if (currentMode === 'consulting') {
-            await processQuery(fullInput, council, agents, rl, lastResponses);
+            await processQuery(fullInput, council, agents, rl, lastResponses, debateMode);
           } else if (currentMode === 'developer') {
             await processDeveloperMode(fullInput, agents, rl, lastResponses);
           }
@@ -253,7 +259,7 @@ async function main() {
         pasteBuffer = [];
       }
 
-      const commandResult = handleCommand(trimmed, agents, council, rl, lastResponses, currentMode, tokenUsage, pastedTextCounter);
+      const commandResult = handleCommand(trimmed, agents, council, rl, lastResponses, currentMode, debateMode, tokenUsage, pastedTextCounter);
       if (commandResult.action === 'multiline') {
         multiLineMode = true;
         multiLineBuffer = [];
@@ -267,6 +273,9 @@ async function main() {
       }
       if (commandResult.mode) {
         currentMode = commandResult.mode;
+      }
+      if (commandResult.debateMode) {
+        debateMode = commandResult.debateMode;
       }
       return;
     }
@@ -295,7 +304,7 @@ async function main() {
       // Process the input
       try {
         if (currentMode === 'consulting') {
-          await processQuery(fullInput, council, agents, rl, lastResponses);
+          await processQuery(fullInput, council, agents, rl, lastResponses, debateMode);
         } else if (currentMode === 'developer') {
           await processDeveloperMode(fullInput, agents, rl, lastResponses);
         }
@@ -343,9 +352,9 @@ async function main() {
 
 /**
  * Handle special commands
- * Returns object with: { action, mode, counter }
+ * Returns object with: { action, mode, debateMode, counter }
  */
-function handleCommand(command, agents, council, rl, lastResponses, currentMode, tokenUsage, pastedTextCounter) {
+function handleCommand(command, agents, council, rl, lastResponses, currentMode, debateMode, tokenUsage, pastedTextCounter) {
   const parts = command.split(' ');
   const cmd = parts[0].toLowerCase();
   const arg = parts[1];
@@ -374,6 +383,24 @@ function handleCommand(command, agents, council, rl, lastResponses, currentMode,
       console.log(chalk.dim('Iterative code development with review cycles\n'));
       rl.prompt();
       return { mode: 'developer' };
+
+    case '/normal-debate':
+      console.log(chalk.green('\n✓ Switched to NORMAL debate mode'));
+      console.log(chalk.dim('Standard 2-round debate process\n'));
+      rl.prompt();
+      return { debateMode: 'normal' };
+
+    case '/extra-debate':
+      console.log(chalk.green('\n✓ Switched to EXTRA debate mode'));
+      console.log(chalk.dim('Extended debate up to 10 rounds (or until consensus)\n'));
+      rl.prompt();
+      return { debateMode: 'extra' };
+
+    case '/unlimited-debate':
+      console.log(chalk.green('\n✓ Switched to UNLIMITED debate mode'));
+      console.log(chalk.dim('Unlimited debate rounds until perfect consensus\n'));
+      rl.prompt();
+      return { debateMode: 'unlimited' };
 
     case '/stats':
       Renderer.displayTokenStats(tokenUsage);
@@ -405,7 +432,7 @@ function handleCommand(command, agents, council, rl, lastResponses, currentMode,
           setImmediate(async () => {
             try {
               if (currentMode === 'consulting') {
-                await processQuery(fileContent, council, agents, rl, lastResponses);
+                await processQuery(fileContent, council, agents, rl, lastResponses, debateMode);
               } else if (currentMode === 'developer') {
                 await processDeveloperMode(fileContent, agents, rl, lastResponses);
               }
@@ -467,9 +494,40 @@ function handleCommand(command, agents, council, rl, lastResponses, currentMode,
 }
 
 /**
+ * Check if debate responses indicate consensus
+ */
+function hasReachedConsensus(responses) {
+  if (responses.length === 0) return false;
+
+  const consensusKeywords = [
+    'agree', 'consensus', 'concur', 'aligned', 'no objection',
+    'no issues', 'approved', 'accept', 'support', 'endorse',
+    'in agreement', 'no concerns', 'satisfied', 'complete agreement'
+  ];
+
+  const objectionKeywords = [
+    'disagree', 'however', 'but', 'issue', 'problem', 'concern',
+    'mistake', 'incorrect', 'wrong', 'flaw', 'overlook', 'missing',
+    'should reconsider', 'alternative', 'better approach'
+  ];
+
+  // Check each response
+  const agreeCount = responses.filter(r => {
+    const lower = r.response.toLowerCase();
+    const hasConsensus = consensusKeywords.some(kw => lower.includes(kw));
+    const hasObjection = objectionKeywords.some(kw => lower.includes(kw));
+    // Consider agreement if consensus keywords present without objections
+    return hasConsensus && !hasObjection;
+  }).length;
+
+  // Consensus if most agents agree (>= 75%)
+  return agreeCount >= Math.ceil(responses.length * 0.75);
+}
+
+/**
  * Process user query through deliberation
  */
-async function processQuery(query, council, agents, rl, lastResponses) {
+async function processQuery(query, council, agents, rl, lastResponses, debateMode = 'normal') {
   // Clear previous responses
   Object.keys(lastResponses).forEach(key => delete lastResponses[key]);
   const abortController = new AbortController();
@@ -560,7 +618,12 @@ async function processQuery(query, council, agents, rl, lastResponses) {
     Renderer.displayPhaseHeader('PHASE 2: DEBATE');
     const debates = [];
 
-    for (let round = 1; round <= 2; round++) {
+    // Determine max rounds based on debate mode
+    const maxRounds = debateMode === 'normal' ? 2
+                     : debateMode === 'extra' ? 10
+                     : 999; // unlimited
+
+    for (let round = 1; round <= maxRounds; round++) {
       if (abortController.signal.aborted) {
         break;
       }
@@ -598,6 +661,14 @@ async function processQuery(query, council, agents, rl, lastResponses) {
       });
 
       debates.push({ round, responses: completedResponses });
+
+      // Check for consensus (only in extra/unlimited modes after round 2)
+      if (debateMode !== 'normal' && round >= 2) {
+        if (hasReachedConsensus(completedResponses)) {
+          console.log(chalk.green.bold(`\n✓ Consensus reached after ${round} rounds!\n`));
+          break;
+        }
+      }
     }
 
     if (abortController.signal.aborted || debates.length === 0) {
